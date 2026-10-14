@@ -10,6 +10,7 @@ import './styles/my.css';
 import './styles/write.css';
 import './styles/garage.css';
 import './styles/explore.css';
+import './styles/market.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

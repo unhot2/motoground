@@ -1,0 +1,691 @@
+/* =========================================
+   중고 매물 (목록 / 상세 / 등록)
+   홈의 .market(중고·신차 카드)과 겹치지 않게 market-page, listing-* 사용
+   ========================================= */
+.market-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 32px;
+  padding-bottom: 96px;
+}
+
+/* ---------- 검색 · 필터 ---------- */
+.market-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+.market-search {
+  width: 100%;
+  height: 54px;
+  padding: 0 6px 0 16px;
+  gap: 10px;
+}
+.market-search__icon {
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+.market-search input {
+  font-size: 16px;
+}
+.board-search .market-search__btn {
+  width: auto;
+  height: 42px;
+  padding: 0 20px;
+  background: var(--gold);
+  color: var(--on-gold);
+  font-size: 14px;
+}
+.board-search .market-search__btn:hover {
+  background: var(--gold-light);
+}
+.market-selects {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.market-select .my-select {
+  width: 100%;
+  height: 44px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.market-select .my-select.is-set {
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+.market-filter__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.market-filter__foot .check {
+  align-items: center;
+}
+
+/* ---------- 결과 툴바 ---------- */
+.market-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.market-toolbar__count {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 15px;
+}
+.market-toolbar__count .text-gold {
+  font-family: var(--font-en);
+  font-size: 18px;
+  font-weight: 700;
+}
+.market-sort {
+  height: 40px;
+  font-size: 14px;
+}
+
+.market-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 56px 24px;
+  text-align: center;
+}
+.market-empty h2 {
+  margin: 4px 0 0;
+  font-size: 20px;
+}
+.market-empty p {
+  margin: 0 0 8px;
+}
+
+/* ---------- 매물 카드 ---------- */
+.listing-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  transition: opacity 0.15s ease;
+}
+.listing-grid.is-loading {
+  opacity: 0.55;
+}
+.listing-card {
+  position: relative;
+  overflow: hidden;
+}
+.listing-card:hover {
+  border-color: var(--gold);
+}
+.listing-card--skeleton {
+  min-height: 330px;
+  animation: mg-pulse 1.4s ease-in-out infinite;
+}
+.listing-card__link {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: inherit;
+}
+.listing-card__link:hover {
+  color: inherit;
+}
+.listing-card__photo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--surface-3);
+}
+.listing-photo__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.listing-photo__model {
+  width: 82%;
+  height: auto;
+  object-fit: contain;
+}
+.listing-photo__art {
+  color: var(--text-faint);
+}
+.listing-card.is-sold .listing-card__photo > :first-child {
+  opacity: 0.4;
+}
+.listing-card__count {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(10, 9, 7, 0.7);
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.listing-status {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.listing-status--reserved {
+  background: var(--gold);
+  color: var(--on-gold);
+}
+.listing-status--sold {
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  color: var(--text-muted);
+}
+.listing-status--inline {
+  position: static;
+}
+
+.listing-like {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(242, 235, 221, 0.18);
+  border-radius: 50%;
+  background: rgba(10, 9, 7, 0.6);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.listing-like:hover {
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+.listing-like.is-on,
+.listing-like-btn.is-on {
+  color: var(--gold-light);
+}
+.listing-like.is-on svg,
+.listing-like-btn.is-on svg {
+  fill: currentColor;
+}
+
+.listing-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  padding: 14px 16px 16px;
+}
+.listing-card__brand {
+  font-family: var(--font-en);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+.listing-card__model {
+  font-size: 17px;
+  line-height: 1.35;
+}
+.listing-card__title {
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.listing-card__price {
+  margin-top: 6px;
+  color: var(--gold-light);
+  font-size: 20px;
+  font-weight: 700;
+}
+.listing-card.is-sold .listing-card__price {
+  color: var(--text-faint);
+  text-decoration: line-through;
+}
+.listing-card__meta {
+  color: var(--text-subtle);
+  font-size: 13px;
+}
+.listing-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+.listing-card__ago {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+.listing-tag {
+  padding: 1px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* =========================================
+   매물 상세
+   ========================================= */
+.listing-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 32px;
+  padding-bottom: 96px;
+}
+.listing-page__skeleton {
+  min-height: 520px;
+  animation: mg-pulse 1.4s ease-in-out infinite;
+}
+.listing-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  align-items: start;
+  gap: 24px;
+}
+.listing-main,
+.listing-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.listing-side {
+  position: sticky;
+  top: calc(var(--header-h) + 16px);
+}
+
+/* 사진 */
+.listing-gallery {
+  overflow: hidden;
+}
+.listing-gallery__main {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-3);
+}
+.listing-gallery__main:focus-visible {
+  outline-offset: -2px;
+}
+.listing-gallery__arrow {
+  position: absolute;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(242, 235, 221, 0.18);
+  border-radius: 50%;
+  background: rgba(10, 9, 7, 0.6);
+  color: var(--text);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.listing-gallery__arrow:hover {
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+.listing-gallery__arrow--prev {
+  left: 14px;
+}
+.listing-gallery__arrow--next {
+  right: 14px;
+}
+.listing-gallery__count {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(10, 9, 7, 0.7);
+  color: var(--text-2);
+  font-family: var(--font-en);
+  font-size: 13px;
+}
+.listing-gallery__thumbs {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  overflow-x: auto;
+}
+.listing-gallery__thumb {
+  flex-shrink: 0;
+  width: 76px;
+  height: 57px;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: var(--surface-3);
+  opacity: 0.6;
+  cursor: pointer;
+}
+.listing-gallery__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.listing-gallery__thumb:hover,
+.listing-gallery__thumb.is-active {
+  opacity: 1;
+}
+.listing-gallery__thumb.is-active {
+  border-color: var(--gold);
+}
+
+/* 정보 · 설명 */
+.listing-section {
+  padding: 24px 28px;
+}
+.listing-section__title {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+.listing-specs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.listing-spec {
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.listing-spec dt {
+  color: var(--text-faint);
+  font-size: 13px;
+}
+.listing-spec dd {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.listing-tuning {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.listing-tuning__label {
+  color: var(--text-faint);
+  font-size: 13px;
+}
+.listing-tuning p {
+  margin: 2px 0 0;
+  color: var(--text-2);
+}
+.listing-desc {
+  margin: 0 0 12px;
+  color: var(--text-2);
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.listing-desc:last-child {
+  margin-bottom: 0;
+}
+
+/* 요약 · 버튼 */
+.listing-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+}
+.listing-summary__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.listing-summary__title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.listing-summary__price {
+  margin: 0;
+  color: var(--gold-light);
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 1.25;
+}
+.listing-summary__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.listing-summary .form-alert {
+  margin-top: 4px;
+}
+
+.listing-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+.listing-actions__main {
+  width: 100%;
+}
+.listing-actions .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.listing-actions__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.listing-actions__row .btn {
+  height: 44px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+.listing-actions__stats {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 13px;
+  text-align: center;
+}
+.listing-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  background: rgba(201, 162, 74, 0.08);
+}
+.listing-contact__label {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.listing-contact__value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gold-light);
+  font-size: 17px;
+  font-weight: 700;
+  word-break: break-all;
+}
+.listing-owner__label {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.listing-owner__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.listing-owner__status .write-chip {
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+/* 판매자 · 안전거래 */
+.listing-seller {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+}
+.listing-seller__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.listing-safety {
+  padding: 20px 22px;
+}
+.listing-safety__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  color: var(--gold-light);
+  font-size: 15px;
+}
+.listing-safety ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.listing-safety li {
+  display: flex;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.listing-safety li svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--gold);
+}
+
+.listing-similar .section__head {
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1080px) {
+  .market-selects {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .listing-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .listing-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .listing-side {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .market-page,
+  .listing-page {
+    gap: 16px;
+    padding-top: 20px;
+    padding-bottom: 64px;
+  }
+  .market-filter {
+    padding: 14px;
+    gap: 12px;
+  }
+  .market-search {
+    height: 48px;
+    padding-left: 12px;
+  }
+  .board-search .market-search__btn {
+    height: 38px;
+    padding: 0 14px;
+  }
+  .market-genres {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 -14px;
+    padding: 0 14px;
+    scrollbar-width: none;
+  }
+  .market-genres .write-chip {
+    flex-shrink: 0;
+    min-height: 36px;
+    padding: 0 14px;
+  }
+  .market-selects {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .listing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .listing-card__body {
+    padding: 10px 12px 12px;
+  }
+  .listing-card__model {
+    font-size: 15px;
+  }
+  .listing-card__price {
+    font-size: 17px;
+  }
+  .listing-card__meta {
+    font-size: 12px;
+  }
+  .listing-like {
+    top: 6px;
+    right: 6px;
+    width: 34px;
+    height: 34px;
+  }
+  .listing-section {
+    padding: 20px 18px;
+  }
+  .listing-specs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .listing-summary {
+    padding: 20px 18px;
+  }
+  .listing-summary__price {
+    font-size: 28px;
+  }
+}

@@ -173,6 +173,16 @@ create table if not exists public.listing_images (
 
 create index if not exists listing_images_listing_idx on public.listing_images (listing_id, sort_order);
 
+-- 매물 추가 정보 (예전에 schema.sql 을 실행했어도 다시 Run 하면 컬럼만 추가됩니다)
+alter table public.listings add column if not exists accident text check (accident in ('none', 'minor', 'major'));  -- 사고 이력
+alter table public.listings add column if not exists tuning   text check (char_length(tuning) <= 200);                -- 튜닝 내역
+
+-- 매물 연락처 (오픈채팅 링크·전화번호) — 로그인한 회원만 볼 수 있게 매물과 따로 저장
+create table if not exists public.listing_contacts (
+  listing_id bigint primary key references public.listings (id) on delete cascade,
+  contact    text   not null check (char_length(contact) between 1 and 200)
+);
+
 
 -- ---------------------------------------------------------------------
 -- 8. 매물 찜
@@ -401,6 +411,15 @@ drop policy if exists "listing_likes_delete" on public.listing_likes;
 create policy "listing_likes_read"   on public.listing_likes for select to authenticated using (user_id = auth.uid());
 create policy "listing_likes_insert" on public.listing_likes for insert to authenticated with check (user_id = auth.uid());
 create policy "listing_likes_delete" on public.listing_likes for delete to authenticated using (user_id = auth.uid());
+
+-- 매물 연락처 (읽기는 로그인 회원만, 쓰기는 자기 매물만)
+alter table public.listing_contacts enable row level security;
+drop policy if exists "listing_contacts_read"  on public.listing_contacts;
+drop policy if exists "listing_contacts_write" on public.listing_contacts;
+create policy "listing_contacts_read"  on public.listing_contacts for select to authenticated using (true);
+create policy "listing_contacts_write" on public.listing_contacts for all to authenticated
+  using      (exists (select 1 from public.listings l where l.id = listing_id and l.seller_id = auth.uid()))
+  with check (exists (select 1 from public.listings l where l.id = listing_id and l.seller_id = auth.uid()));
 
 
 -- =====================================================================

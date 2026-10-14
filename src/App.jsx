@@ -18,6 +18,9 @@ import GaragePage from './pages/GaragePage.jsx';
 import BikeFormPage from './pages/BikeFormPage.jsx';
 import BikeDetailPage from './pages/BikeDetailPage.jsx';
 import ExplorePage from './pages/ExplorePage.jsx';
+import MarketPage from './pages/MarketPage.jsx';
+import ListingDetailPage from './pages/ListingDetailPage.jsx';
+import ListingFormPage from './pages/ListingFormPage.jsx';
 
 export default function App() {
   return (
@@ -28,12 +31,16 @@ export default function App() {
         <Route path="/community/:board" element={<CommunityPage />} />
         <Route path="/community/post/:id" element={<PostDetailPage />} />
         <Route path="/explore" element={<ExplorePage />} />
+        <Route path="/market" element={<MarketPage />} />
+        <Route path="/market/:id" element={<ListingDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route element={<RequireAuth />}>
           <Route path="/community/write" element={<WritePage />} />
+          <Route path="/market/new" element={<ListingFormPage />} />
+          <Route path="/market/:id/edit" element={<ListingFormPage />} />
           <Route path="/garage" element={<GaragePage />} />
           <Route path="/garage/new" element={<BikeFormPage />} />
           <Route path="/garage/:id" element={<BikeDetailPage />} />

@@ -4,7 +4,7 @@
 export const mainNav = [
   { label: '홈', to: '/', match: '/' },
   { label: '커뮤니티', to: '/community', match: '/community' },
-  { label: '중고매물', to: '/#market' },
+  { label: '중고매물', to: '/market', match: '/market' },
   { label: '신차', to: '/#market' },
   { label: '모델 탐색', to: '/explore', match: '/explore' },
   { label: '플레이스', to: '/#features' },
@@ -24,7 +24,7 @@ export const services = [
   { label: '내차 골라줘', icon: 'bike', mobile: true },
   { label: '내 장르 찾기', icon: 'compass', to: '/explore' },
   { label: '인증중고', icon: 'shield', mobile: true },
-  { label: '내차팔기', icon: 'tag', mobile: true },
+  { label: '내차팔기', icon: 'tag', mobile: true, to: '/market/new' },
   { label: '최저가 보험', icon: 'umbrella', mobile: true },
   { label: '용품', icon: 'helmet', mobile: true },
   { label: '내 주변', icon: 'pin' },
@@ -57,7 +57,7 @@ export const features = [
 export const mobileTabs = [
   { label: '홈', icon: 'home', to: '/', match: '/' },
   { label: '커뮤니티', icon: 'chat', to: '/community', match: '/community' },
-  { label: '매물', icon: 'bike', to: '/#market' },
+  { label: '매물', icon: 'bike', to: '/market', match: '/market' },
   { label: '채팅', icon: 'bubble', to: '/#chat' },
   { label: '내 차고', icon: 'garage', to: '/garage', match: '/garage' },
 ];
