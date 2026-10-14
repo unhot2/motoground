@@ -15,7 +15,7 @@ const SORT_COLUMNS = {
 const SORT_KEYS = { latest: 'createdAt', views: 'views', comments: 'comments', likes: 'likes' };
 
 const POST_FIELDS =
-  'id, board_slug, author_id, title, is_pinned, view_count, comment_count, like_count, created_at, author:profiles!posts_author_id_fkey(nickname)';
+  'id, board_slug, author_id, title, is_pinned, view_count, comment_count, like_count, created_at, author:profiles!posts_author_id_fkey(nickname, avatar_url)';
 // ↑ posts 와 profiles 는 작성자(author_id)·추천(post_likes) 두 경로로 이어져 있어서 작성자 쪽을 명시
 
 // DB 행 → 화면에서 쓰는 모양
@@ -27,6 +27,7 @@ const toPost = (row) => ({
   imageUrls: row.image_urls ?? [],
   authorId: row.author_id ?? null,
   author: row.author?.nickname ?? '알 수 없음',
+  avatarUrl: row.author?.avatar_url ?? null,
   createdAt: row.created_at,
   views: row.view_count,
   comments: row.comment_count,

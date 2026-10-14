@@ -297,7 +297,7 @@
 }
 .board-row {
   display: grid;
-  grid-template-columns: 64px 96px minmax(0, 1fr) 110px 64px 64px 52px;
+  grid-template-columns: 64px 96px minmax(0, 1fr) 130px 64px 64px 52px;
   align-items: center;
   gap: 12px;
   min-height: 56px;
@@ -346,10 +346,17 @@ a.board-row:hover {
   white-space: nowrap;
 }
 .col-author {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
   color: var(--text-muted);
   font-size: 14px;
   white-space: nowrap;
+}
+.col-author__name {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1040,6 +1047,14 @@ a.board-row:hover {
   }
   .board-row .col-cat {
     color: var(--gold-light);
+  }
+  .board-row .col-author {
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  .board-row .col-author .avatar {
+    width: 18px !important;
+    height: 18px !important;
   }
   .board-row .col-author::after,
   .board-row .col-date::after {

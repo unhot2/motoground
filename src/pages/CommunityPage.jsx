@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
+import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
 import Pagination from '../components/Pagination.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -258,7 +259,10 @@ function PostRow({ post, notice = false, highlight = '' }) {
         <span className="col-title__text"><Highlight text={post.title} keyword={highlight} /></span>
         {post.comments > 0 && <span className="comment-count">[{post.comments}]</span>}
       </span>
-      <span className="col-author">{post.author}</span>
+      <span className="col-author">
+        <Avatar src={post.avatarUrl} size={22} />
+        <span className="col-author__name">{post.author}</span>
+      </span>
       <span className="col-date">{formatListDate(post.createdAt)}</span>
       <span className="col-num col-views">{notice ? '-' : formatCount(post.views)}</span>
       <span className="col-num col-likes">{notice ? '-' : post.likes}</span>

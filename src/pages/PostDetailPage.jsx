@@ -85,9 +85,7 @@ export default function PostDetailPage() {
           <Link to={boardPath} className="article__board">{boardName(post.board)}</Link>
           <h1 className="article__title">{post.title}</h1>
           <div className="article__meta">
-            <span className="avatar" aria-hidden="true">
-              <Icon name="helmet" size={18} />
-            </span>
+            <Avatar src={post.avatarUrl} size={32} />
             <span className="article__author">{post.author}</span>
             <span className="dot" aria-hidden="true">·</span>
             <span>{formatDateTime(post.createdAt)}</span>
