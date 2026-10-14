@@ -1,0 +1,276 @@
+/* =========================================
+   모델 탐색
+   ========================================= */
+.explore {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding-top: 32px;
+  padding-bottom: 96px;
+}
+
+/* ---------- 성향 카드 ---------- */
+.explore-types {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.explore-type {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 200px;
+  padding: 22px 22px 18px;
+  overflow: hidden;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.explore-type:hover {
+  border-color: var(--gold);
+}
+.explore-type.is-active {
+  border-color: var(--gold);
+  background:
+    linear-gradient(160deg, rgba(201, 162, 74, 0.18), rgba(201, 162, 74, 0) 65%),
+    var(--surface);
+  box-shadow: 0 0 0 1px var(--gold) inset;
+}
+.explore-type__en {
+  font-family: var(--font-en);
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+}
+.explore-type__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.3;
+}
+.explore-type__tagline {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.explore-type__art {
+  margin-top: auto;
+  align-self: flex-end;
+  color: var(--text-faint);
+  transition: color 0.15s ease;
+}
+.explore-type.is-active .explore-type__art,
+.explore-type:hover .explore-type__art {
+  color: var(--gold-light);
+}
+
+/* ---------- 선택한 성향 소개 ---------- */
+.explore-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 32px;
+  padding: 32px;
+}
+.explore-intro__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.explore-intro__copy p {
+  margin: 0;
+}
+.explore-intro__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.25;
+}
+.explore-intro__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.explore-intro__who {
+  padding: 22px 24px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.explore-intro__who ul {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.explore-intro__who li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-2);
+  font-size: 15px;
+}
+.explore-intro__who li svg {
+  flex-shrink: 0;
+  color: var(--gold-light);
+}
+
+/* ---------- 단계별 추천 기종 ---------- */
+.explore-level__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.explore-level__title {
+  margin: 0;
+  padding-left: 12px;
+  border-left: 4px solid var(--gold);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 1.2;
+}
+.explore-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.explore-model {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.explore-model:hover {
+  border-color: var(--line-strong);
+}
+.explore-model__photo {
+  aspect-ratio: 16 / 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-3);
+  color: var(--text-faint);
+}
+.explore-model__img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+}
+.explore-model__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  padding: 16px 18px 18px;
+}
+.explore-model__brand {
+  font-family: var(--font-en);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+.explore-model__name {
+  font-size: 18px;
+  line-height: 1.35;
+}
+.explore-model__note {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.explore-model__spec {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 12px;
+}
+.explore-model__cc,
+.explore-model__license {
+  padding: 2px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.explore-model__cc {
+  background: var(--surface-3);
+  color: var(--text-2);
+}
+.explore-model__license {
+  border: 1px solid var(--line-strong);
+  color: var(--text-subtle);
+}
+
+.explore-note {
+  margin: 0;
+  text-align: center;
+}
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1080px) {
+  .explore-types,
+  .explore-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .explore-intro {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .explore {
+    gap: 32px;
+    padding-top: 20px;
+    padding-bottom: 64px;
+  }
+  .explore-types {
+    gap: 10px;
+  }
+  .explore-type {
+    min-height: 0;
+    padding: 16px 14px 12px;
+  }
+  .explore-type__title {
+    font-size: 20px;
+  }
+  .explore-type__tagline {
+    font-size: 12px;
+  }
+  .explore-type__art {
+    width: 84px;
+    height: auto;
+    margin-top: 8px;
+  }
+  .explore-intro {
+    gap: 20px;
+    padding: 22px 18px;
+  }
+  .explore-intro__title {
+    font-size: 26px;
+  }
+  .explore-intro__who {
+    padding: 18px;
+  }
+  .explore-level__head {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .explore-level__title {
+    font-size: 20px;
+  }
+  .explore-grid {
+    gap: 10px;
+  }
+  .explore-model__body {
+    padding: 12px 12px 14px;
+  }
+  .explore-model__name {
+    font-size: 15px;
+  }
+  .explore-model__note {
+    font-size: 12px;
+  }
+}

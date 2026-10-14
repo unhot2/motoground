@@ -6,7 +6,7 @@ export const mainNav = [
   { label: '커뮤니티', to: '/community', match: '/community' },
   { label: '중고매물', to: '/#market' },
   { label: '신차', to: '/#market' },
-  { label: '모델 탐색', to: '/#features' },
+  { label: '모델 탐색', to: '/explore', match: '/explore' },
   { label: '플레이스', to: '/#features' },
   { label: '용품', to: '/#services' },
   { label: '내 차고', to: '/garage', match: '/garage' },
@@ -22,13 +22,13 @@ export const popularKeywords = ['레플리카', '네이키드', '투어러', '�
 
 export const services = [
   { label: '내차 골라줘', icon: 'bike', mobile: true },
-  { label: '내 장르 찾기', icon: 'compass' },
+  { label: '내 장르 찾기', icon: 'compass', to: '/explore' },
   { label: '인증중고', icon: 'shield', mobile: true },
   { label: '내차팔기', icon: 'tag', mobile: true },
   { label: '최저가 보험', icon: 'umbrella', mobile: true },
   { label: '용품', icon: 'helmet', mobile: true },
   { label: '내 주변', icon: 'pin' },
-  { label: '모델 탐색', icon: 'search', mobile: true },
+  { label: '모델 탐색', icon: 'search', mobile: true, to: '/explore' },
   { label: '커뮤니티', icon: 'chat', to: '/community' },
   { label: '시세조회', icon: 'chart', mobile: true },
   { label: '매물알림', icon: 'bell', mobile: true },
@@ -48,7 +48,7 @@ export const homeBoardTabs = [
 
 export const features = [
   { title: '바이크 관리', desc: '유지비, 소모품 교체시기, 연비가 궁금하다면?', icon: 'wrench', to: '/garage' },
-  { title: '모델 탐색', desc: '모델 제원, 가격, 유지비 비교를 한눈에', icon: 'search' },
+  { title: '모델 탐색', desc: '모델 제원, 가격, 유지비 비교를 한눈에', icon: 'search', to: '/explore' },
   { title: '플레이스', desc: '내 주변 맛집, 모임, 라이딩 코스를 한눈에', icon: 'pin' },
   { title: '최저가 보험', desc: '보험료를 비교하고 가입까지 간편하게', icon: 'umbrella' },
   { title: '커뮤니티', desc: '바린이도 전문가로 성장할 수 있어요', icon: 'chat', to: '/community' },
