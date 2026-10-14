@@ -222,7 +222,7 @@ function BikeForm({ bike = null, logs = [], isFirst = false }) {
             </div>
           ) : (
             <div className="model-picked model-picked--summary">
-              <span className="model-picked__art"><BikeArt genre={form.genre} width={72} /></span>
+              <span className="model-picked__art"><BikeArt genre={form.genre} image={findModel(form.brand, form.model)?.image} width={72} /></span>
               <div className="model-picked__info">
                 <span className="model-picked__label">선택한 모델</span>
                 <strong>{form.brand} {form.model}</strong>

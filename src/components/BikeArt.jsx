@@ -1,5 +1,5 @@
 // 장르별 바이크 실루엣 (2D 라인 그림, currentColor 사용)
-// 제조사 공식 이미지는 쓰지 않고 장르마다 같은 그림을 씁니다.
+// 모델 전용 일러스트(image)가 있으면 그걸 쓰고, 없으면 장르마다 같은 그림을 씁니다.
 const wheels = (r = 13, back = 24, front = 96, y = 52) => (
   <>
     <circle cx={back} cy={y} r={r} />
@@ -99,7 +99,21 @@ const art = {
 };
 art.etc = art.naked;
 
-export default function BikeArt({ genre, width = 120, className }) {
+export default function BikeArt({ genre, image, width = 120, className }) {
+  if (image) {
+    return (
+      <img
+        className={`bike-art-img ${className ?? ''}`.trim()}
+        src={image}
+        width={width}
+        height={Math.round((width * 70) / 120)}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  }
   return (
     <svg
       className={className}

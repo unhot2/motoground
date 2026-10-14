@@ -101,7 +101,7 @@ export default function ModelPicker({ initialBrand = '', initialModel = '', onNe
 
       <div className="model-picked">
         <span className="model-picked__art">
-          {pickedModel ? <BikeArt genre={pickedModel.genre} width={72} /> : <Icon name="bike" size={28} />}
+          {pickedModel ? <BikeArt genre={pickedModel.genre} image={pickedModel.image} width={72} /> : <Icon name="bike" size={28} />}
         </span>
         <div className="model-picked__info">
           <span className="model-picked__label">선택한 모델</span>
@@ -220,7 +220,7 @@ function ModelSlider({ models, picked, onPick }) {
           >
             <span className="model-card__check" aria-hidden="true"><Icon name="check" size={14} strokeWidth={2.6} /></span>
             {m.old && <span className="model-card__old">단종</span>}
-            <span className="model-card__art"><BikeArt genre={m.genre} width={112} /></span>
+            <span className="model-card__art"><BikeArt genre={m.genre} image={m.image} width={180} /></span>
             <strong className="model-card__name">{m.name}</strong>
             <span className="model-card__spec">{m.cc.toLocaleString('ko-KR')}cc · {genreLabel(m.genre)}</span>
           </button>

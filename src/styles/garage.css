@@ -85,6 +85,12 @@
   height: 100%;
   object-fit: cover;
 }
+/* 기종 일러스트는 잘리지 않게 여백을 두고 통째로 */
+.bike-card__photo .bike-card__model {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+}
 .bike-card__main {
   position: absolute;
   top: 10px;
@@ -169,7 +175,6 @@ a.bike-card--add:hover {
 
 /* ---------- 등록·수정 폼 ---------- */
 .garage-form {
-  max-width: 880px;
   padding: 28px;
   display: flex;
   flex-direction: column;
@@ -211,6 +216,11 @@ a.bike-card--add:hover {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+.bike-hero__photo .bike-hero__model {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
 }
 .bike-hero__info {
   display: flex;
@@ -368,22 +378,6 @@ a.bike-card--add:hover {
   gap: 8px;
   color: var(--text-faint);
   font-size: 13px;
-}
-.part__log {
-  flex-shrink: 0;
-  min-height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-.part__log:hover {
-  border-color: var(--gold);
-  color: var(--gold-light);
 }
 
 .garage-total {
@@ -751,9 +745,33 @@ a.bike-card--add:hover {
 .intervals__head,
 .intervals__row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 96px 72px;
+  grid-template-columns: minmax(0, 1fr) 96px 72px 56px;
   align-items: center;
   gap: 8px;
+}
+.intervals__head span:last-child {
+  text-align: center;
+}
+.intervals__toggle {
+  height: 32px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-faint);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.intervals__toggle.is-on {
+  border-color: var(--gold);
+  background: rgba(201, 162, 74, 0.12);
+  color: var(--gold-light);
+}
+.intervals__row.is-off .intervals__name {
+  color: var(--text-faint);
+}
+.intervals__row.is-off input {
+  opacity: 0.4;
 }
 .intervals__head {
   color: var(--text-faint);
@@ -1155,7 +1173,7 @@ a.bike-card--add:hover {
 }
 .model-card {
   position: relative;
-  flex: 0 0 168px;
+  flex: 0 0 208px;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
@@ -1184,13 +1202,19 @@ a.bike-card--add:hover {
   box-shadow: inset 0 0 0 1px var(--gold);
 }
 .model-card__art {
-  align-self: center;
-  height: 72px;
+  align-self: stretch;
+  height: 108px;
   display: flex;
   align-items: center;
-  margin: 4px 0 6px;
+  justify-content: center;
+  margin: 4px 0 8px;
   color: var(--text-faint);
   transition: color 0.15s ease;
+}
+.model-card__art > svg,
+.model-card__art > img {
+  width: 100%;
+  height: 100%;
 }
 .model-card:hover .model-card__art,
 .model-card.is-active .model-card__art {
@@ -1232,6 +1256,12 @@ a.bike-card--add:hover {
   border-radius: 2px;
   background: var(--gold);
   transition: margin-left 0.1s linear;
+}
+
+/* 모델 전용 일러스트 */
+.bike-art-img {
+  display: block;
+  object-fit: contain;
 }
 
 /* 선택한 모델 */
@@ -1292,7 +1322,10 @@ a.bike-card--add:hover {
     max-height: 320px;
   }
   .model-card {
-    flex-basis: 148px;
+    flex-basis: 168px;
+  }
+  .model-card__art {
+    height: 86px;
   }
   /* 장르 칩은 한 줄로 두고 옆으로 밀어서 보기 */
   .model-picker__genres {

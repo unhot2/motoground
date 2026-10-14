@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
+import BikeArt from '../components/BikeArt.jsx';
 import Icon from '../components/Icon.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import useAsync from '../hooks/useAsync.js';
 import { fetchGarage } from '../api/garage.js';
 import { bikeStatus, bikeTitle, genreLabel, resolveIntervals } from '../data/garage.js';
+import { findModel } from '../data/bikeCatalog.js';
 import { formatCount } from '../lib/format.js';
 
 export function GarageHead({ title = '내 차고', desc, action }) {
@@ -93,14 +95,18 @@ function BikeCard({ bike, logs, intervals }) {
   const soon = status.filter((s) => s.level === 'soon').length;
   const recorded = status.some((s) => s.level !== 'none');
   const spec = [`${bike.brand} ${bike.model}`, bike.modelYear, genreLabel(bike.genre)].filter(Boolean).join(' · ');
+  // 카드는 기종 일러스트 우선, 없으면 올린 사진 → 장르 실루엣
+  const modelImage = findModel(bike.brand, bike.model)?.image;
 
   return (
     <Link to={`/garage/${bike.id}`} className="card bike-card">
       <div className="bike-card__photo">
-        {bike.imageUrls[0] ? (
+        {modelImage ? (
+          <BikeArt image={modelImage} width={320} className="bike-card__model" />
+        ) : bike.imageUrls[0] ? (
           <img src={bike.imageUrls[0]} alt="" loading="lazy" />
         ) : (
-          <Icon name="bike" size={40} strokeWidth={1.2} />
+          <BikeArt genre={bike.genre} width={160} className="bike-card__model" />
         )}
         {bike.isMain && <span className="bike-card__main">대표</span>}
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
+import BikeArt from '../components/BikeArt.jsx';
 import Icon from '../components/Icon.jsx';
 import Modal from '../components/Modal.jsx';
 import PhotoPicker, { resolvePhotoUrls, toPhotoItems } from '../components/PhotoPicker.jsx';
@@ -28,6 +29,7 @@ import {
   levelText,
   resolveIntervals,
 } from '../data/garage.js';
+import { findModel } from '../data/bikeCatalog.js';
 import { formatCount, formatDate } from '../lib/format.js';
 import { GarageHead } from './GaragePage.jsx';
 
@@ -80,6 +82,8 @@ export default function BikeDetailPage() {
   const spec = [`${bike.brand} ${bike.model}`, bike.modelYear, bike.cc && `${formatCount(bike.cc)}cc`, genreLabel(bike.genre)]
     .filter(Boolean)
     .join(' · ');
+  // 기종 일러스트 우선, 없으면 올린 사진 → 장르 실루엣
+  const modelImage = findModel(bike.brand, bike.model)?.image;
   const bought = [bike.purchasedOn && `구매 ${formatDate(bike.purchasedOn)}`, bike.purchaseKm != null && `구매 시 ${formatCount(bike.purchaseKm)}km`]
     .filter(Boolean)
     .join(' · ');
@@ -98,7 +102,13 @@ export default function BikeDetailPage() {
         {/* 바이크 정보 */}
         <section className="card bike-hero">
           <div className="bike-hero__photo">
-            {bike.imageUrls[0] ? <img src={bike.imageUrls[0]} alt="" /> : <Icon name="bike" size={40} strokeWidth={1.2} />}
+            {modelImage ? (
+              <BikeArt image={modelImage} width={360} className="bike-hero__model" />
+            ) : bike.imageUrls[0] ? (
+              <img src={bike.imageUrls[0]} alt="" />
+            ) : (
+              <BikeArt genre={bike.genre} width={180} className="bike-hero__model" />
+            )}
           </div>
           <div className="bike-hero__info">
             <h2 className="bike-hero__name">
@@ -144,7 +154,6 @@ export default function BikeDetailPage() {
             logs={logs}
             status={status}
             onOpenIntervals={() => setModal({ type: 'intervals' })}
-            onLogItem={(key) => openLog({ items: [key] })}
             onShowLogs={() => setParams({ tab: 'logs' }, { replace: true })}
             onEditLog={(log) => openLog({ log })}
           />
@@ -192,7 +201,7 @@ export default function BikeDetailPage() {
 // ---------------------------------------------------------------------
 // 개요: 소모품 상태판 + 올해 유지비 + 최근 정비
 // ---------------------------------------------------------------------
-function Overview({ logs, status, onOpenIntervals, onLogItem, onShowLogs, onEditLog }) {
+function Overview({ logs, status, onOpenIntervals, onShowLogs, onEditLog }) {
   const year = new Date().getFullYear();
   const yearLogs = logs.filter((l) => l.performedOn.startsWith(String(year)));
   const recent = logs.filter((l) => l.category === 'maintenance').slice(0, 3);
@@ -206,7 +215,7 @@ function Overview({ logs, status, onOpenIntervals, onLogItem, onShowLogs, onEdit
             <Icon name="sliders" size={16} /> 주기 설정
           </button>
         </div>
-        {status.length === 0 && <p className="garage-box__empty">추적 중인 소모품이 없어요. 주기 설정에서 켜주세요.</p>}
+        {status.length === 0 && <p className="garage-box__empty">보이는 소모품이 없어요. 주기 설정에서 켜주세요.</p>}
         <ul className="parts">
           {status.map((s) => (
             <li key={s.key} className="part">
@@ -219,7 +228,6 @@ function Overview({ logs, status, onOpenIntervals, onLogItem, onShowLogs, onEdit
               </div>
               <div className="part__meta">
                 <span>{s.text}</span>
-                <button type="button" className="part__log" onClick={() => onLogItem(s.key)}>교체 기록</button>
               </div>
             </li>
           ))}
@@ -664,20 +672,38 @@ function MileageForm({ bike, onDone }) {
 }
 
 // ---------------------------------------------------------------------
-// 교체 주기 설정 (비우면 추적 안 함)
+// 소모품 교체 주기 + 소모품 상태에 보일지 말지
 // ---------------------------------------------------------------------
 function IntervalForm({ bikeId, intervals, onDone, onCancel }) {
   const [rows, setRows] = useState(() =>
     intervals.map((i) => {
       const base = defaultItems.find((d) => d.key === i.key);
-      return { key: i.key, label: i.label, km: i.km ?? '', months: i.months ?? '', defaultKm: base.km, defaultMonths: base.months };
+      return {
+        key: i.key,
+        label: i.label,
+        km: i.km ?? '',
+        months: i.months ?? '',
+        defaultKm: base.km,
+        defaultMonths: base.months,
+        on: Boolean(i.km || i.months),
+      };
     })
   );
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
   const change = (key, field, value) => setRows((list) => list.map((r) => (r.key === key ? { ...r, [field]: value } : r)));
-  const resetAll = () => setRows((list) => list.map((r) => ({ ...r, km: r.defaultKm ?? '', months: r.defaultMonths ?? '' })));
+  // 다시 켤 때 주기가 비어 있으면 기본값으로 채움
+  const toggle = (key) =>
+    setRows((list) =>
+      list.map((r) => {
+        if (r.key !== key) return r;
+        if (r.on) return { ...r, on: false };
+        const empty = r.km === '' && r.months === '';
+        return { ...r, on: true, ...(empty ? { km: r.defaultKm ?? '', months: r.defaultMonths ?? '' } : {}) };
+      })
+    );
+  const resetAll = () => setRows((list) => list.map((r) => ({ ...r, on: true, km: r.defaultKm ?? '', months: r.defaultMonths ?? '' })));
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -687,9 +713,12 @@ function IntervalForm({ bikeId, intervals, onDone, onCancel }) {
       km: r.km === '' ? null : Number(r.km),
       months: r.months === '' ? null : Number(r.months),
     }));
-    if (items.some((r) => (r.km != null && r.km <= 0) || (r.months != null && r.months <= 0))) {
+    const on = items.filter((r) => r.on);
+    if (on.some((r) => (r.km != null && r.km <= 0) || (r.months != null && r.months <= 0))) {
       return setError('주기는 0보다 큰 숫자로 입력해 주세요.');
     }
+    const empty = on.find((r) => r.km == null && r.months == null);
+    if (empty) return setError(`'${empty.label}'의 km나 개월 중 하나는 입력하거나 숨겨주세요.`);
     setBusy(true);
     try {
       await saveIntervals(bikeId, items);
@@ -704,24 +733,26 @@ function IntervalForm({ bikeId, intervals, onDone, onCancel }) {
   return (
     <form className="garage-modal__form" onSubmit={onSubmit} noValidate>
       <p className="muted garage-modal__desc">
-        먼저 오는 쪽을 기준으로 계산해요. 둘 다 비우면 그 소모품은 추적하지 않아요.
+        먼저 오는 쪽을 기준으로 계산해요. 숨긴 소모품은 소모품 상태에 보이지 않아요.
       </p>
       <div className="intervals">
         <div className="intervals__head" aria-hidden="true">
           <span>항목</span>
           <span>km</span>
           <span>개월</span>
+          <span>표시</span>
         </div>
         {rows.map((r) => (
-          <div key={r.key} className="intervals__row">
+          <div key={r.key} className={`intervals__row ${r.on ? '' : 'is-off'}`}>
             <span className="intervals__name">{r.label}</span>
             <input
               type="number"
               inputMode="numeric"
               min={1}
               aria-label={`${r.label} 교체 주기 km`}
-              value={r.km}
+              value={r.on ? r.km : ''}
               placeholder="-"
+              disabled={!r.on}
               onChange={(e) => change(r.key, 'km', e.target.value)}
             />
             <input
@@ -729,10 +760,20 @@ function IntervalForm({ bikeId, intervals, onDone, onCancel }) {
               inputMode="numeric"
               min={1}
               aria-label={`${r.label} 교체 주기 개월`}
-              value={r.months}
+              value={r.on ? r.months : ''}
               placeholder="-"
+              disabled={!r.on}
               onChange={(e) => change(r.key, 'months', e.target.value)}
             />
+            <button
+              type="button"
+              className={`intervals__toggle ${r.on ? 'is-on' : ''}`}
+              aria-pressed={r.on}
+              aria-label={`${r.label} 소모품 상태에 보이기`}
+              onClick={() => toggle(r.key)}
+            >
+              {r.on ? '보임' : '숨김'}
+            </button>
           </div>
         ))}
       </div>

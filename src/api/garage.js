@@ -172,25 +172,26 @@ export async function deleteLog(log) {
 }
 
 // ---------------------------------------------------------------------
-// 교체 주기 (기본값과 같으면 저장하지 않고 지움)
+// 교체 주기 (기본값과 같으면 저장하지 않고 지움, 숨긴 항목은 주기를 비워서 저장)
 // ---------------------------------------------------------------------
 export async function saveIntervals(bikeId, items) {
-  const custom = items.filter((i) => i.km !== i.defaultKm || i.months !== i.defaultMonths);
-  const reset = items.filter((i) => !custom.includes(i)).map((i) => i.key);
+  const isDefault = (i) => i.on && i.km === i.defaultKm && i.months === i.defaultMonths;
+  const reset = items.filter(isDefault).map((i) => i.key);
+  const keep = items.filter((i) => !isDefault(i));
 
   if (reset.length) {
     const { error } = await db().from('bike_intervals').delete().eq('bike_id', bikeId).in('item_key', reset);
     if (error) throw error;
   }
-  if (custom.length) {
+  if (keep.length) {
     const { error } = await db()
       .from('bike_intervals')
       .upsert(
-        custom.map((i) => ({
+        keep.map((i) => ({
           bike_id: bikeId,
           item_key: i.key,
-          interval_km: i.km || null,
-          interval_months: i.months || null,
+          interval_km: (i.on && i.km) || null,
+          interval_months: (i.on && i.months) || null,
         }))
       );
     if (error) throw error;

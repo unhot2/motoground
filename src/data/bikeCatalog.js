@@ -4,6 +4,16 @@
 //   목록에 없는 모델은 '직접 입력'으로 등록합니다.
 const OLD = true;
 
+// 모델 전용 일러스트 (public/bikes). 없으면 장르별 실루엣을 씁니다.
+const images = {
+  '야마하/YZF-R3': '/bikes/yamaha-yzf-r3.png',
+  '야마하/YZF-R1': '/bikes/yamaha-yzf-r1.png',
+  '야마하/YZF-R9': '/bikes/yamaha-yzf-r9.png',
+  '야마하/YZF-R15': '/bikes/yamaha-yzf-r15.png',
+  '야마하/YZF-R7': '/bikes/yamaha-yzf-r7.png',
+  '야마하/YZF-R6': '/bikes/yamaha-yzf-r6.png',
+};
+
 export const brands = [
   {
     name: '혼다',
@@ -361,7 +371,13 @@ export const brands = [
 ].map((b) => ({
   ...b,
   // 현행 모델 먼저, 단종 모델은 뒤로
-  models: b.models.map(([name, genre, cc, old = false]) => ({ name, genre, cc, old })),
+  models: b.models.map(([name, genre, cc, old = false]) => ({
+    name,
+    genre,
+    cc,
+    old,
+    image: images[`${b.name}/${name}`] ?? null,
+  })),
 }));
 
 export const findBrand = (name) => brands.find((b) => b.name === name) ?? null;
