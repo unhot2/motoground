@@ -1,18 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
+import Avatar from '../components/Avatar.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import useAsync from '../hooks/useAsync.js';
 import { boardName } from '../data/community.js';
-import { fetchComments, fetchPost, increaseView } from '../api/community.js';
+import { COMMENT_MAX, createComment, deleteComment, fetchComments, fetchPost, increaseView } from '../api/community.js';
 import { isSupabaseConfigured } from '../lib/supabase.js';
 import { formatCount, formatDateTime } from '../lib/format.js';
 import NotFoundPage from './NotFoundPage.jsx';
 
 export default function PostDetailPage() {
   const { id } = useParams();
-  const { pathname } = useLocation();
-  const { user, nickname } = useAuth();
   const detail = useAsync(() => fetchPost(id), [id]);
   const comments = useAsync(() => fetchComments(id), [id]);
 
@@ -39,7 +38,7 @@ export default function PostDetailPage() {
   const { post, prev, next } = detail.data;
   const boardPath = `/community/${post.board}`;
   const paragraphs = post.content.split(/\n{2,}|\r\n\r\n/).filter((t) => t.trim());
-  const commentList = comments.data ?? [];
+  const commentCount = comments.data ? comments.data.length : post.comments;
 
   return (
     <div className="container post-page">
@@ -62,7 +61,7 @@ export default function PostDetailPage() {
             <span className="dot" aria-hidden="true">·</span>
             <span>{formatDateTime(post.createdAt)}</span>
             <span className="article__stats">
-              조회 {formatCount(post.views)} · 댓글 {post.comments} · 추천 {post.likes}
+              조회 {formatCount(post.views)} · 댓글 {commentCount} · 추천 {post.likes}
             </span>
           </div>
         </header>
@@ -100,46 +99,7 @@ export default function PostDetailPage() {
         </div>
       </article>
 
-      {/* 댓글 */}
-      <section className="card comments" aria-labelledby="comments-title">
-        <h2 id="comments-title" className="comments__title">
-          댓글 <span className="text-gold">{comments.data ? commentList.length : post.comments}</span>
-        </h2>
-
-        {user ? (
-          <form className="comment-form" onSubmit={(e) => e.preventDefault()}>
-            <label htmlFor="comment-input" className="sr-only">댓글 입력</label>
-            <textarea id="comment-input" rows={3} placeholder={`${nickname || '회원'} 님, 댓글을 남겨보세요`} />
-            <button type="submit" className="btn btn--gold">등록</button>
-          </form>
-        ) : (
-          <div className="comment-login">
-            <span>로그인하면 댓글을 남길 수 있어요.</span>
-            <Link to={`/login?next=${encodeURIComponent(pathname)}`} className="btn btn--gold btn--pill">로그인</Link>
-          </div>
-        )}
-
-        {comments.data && commentList.length === 0 && (
-          <p className="comments__empty">첫 댓글을 남겨보세요.</p>
-        )}
-
-        <ul className="comment-list">
-          {commentList.map((c) => (
-            <li key={c.id} className={`comment ${c.reply ? 'comment--reply' : ''}`}>
-              <div className="comment__meta">
-                <span className="avatar avatar--sm" aria-hidden="true"><Icon name="helmet" size={14} /></span>
-                <strong>{c.author}</strong>
-                <span>{formatDateTime(c.createdAt)}</span>
-              </div>
-              <p className="comment__text">{c.text}</p>
-              <div className="comment__actions">
-                <button type="button">답글</button>
-                <button type="button">추천 {c.likes}</button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <CommentSection postId={post.id} comments={comments} fallbackCount={post.comments} />
 
       {/* 이전/다음 글 */}
       {(prev || next) && (
@@ -163,5 +123,171 @@ export default function PostDetailPage() {
         <Link to={boardPath} className="btn btn--outline btn--pill">목록으로</Link>
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------
+// 댓글: 등록 · 답글 · 내 댓글 삭제
+// ---------------------------------------------------------------------
+function CommentSection({ postId, comments, fallbackCount }) {
+  const { pathname } = useLocation();
+  const { user, nickname } = useAuth();
+  const [replyTo, setReplyTo] = useState(null); // 답글을 달 댓글
+  const [deletingId, setDeletingId] = useState(null);
+  const [error, setError] = useState('');
+
+  const list = comments.data ?? [];
+  const hasReplies = (id) => list.some((c) => c.parentId === id);
+
+  async function submit(content, parentId) {
+    await createComment({ postId, authorId: user.id, content, parentId });
+    setReplyTo(null);
+    comments.reload();
+  }
+
+  async function onDelete(c) {
+    if (!window.confirm('댓글을 삭제할까요?')) return;
+    setError('');
+    setDeletingId(c.id);
+    try {
+      await deleteComment(c.id);
+      comments.reload();
+    } catch (err) {
+      console.error(err);
+      setError('댓글을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  return (
+    <section className="card comments" aria-labelledby="comments-title">
+      <h2 id="comments-title" className="comments__title">
+        댓글 <span className="text-gold">{comments.data ? list.length : fallbackCount}</span>
+      </h2>
+
+      {user ? (
+        <CommentForm
+          id="comment-input"
+          placeholder={`${nickname || '회원'} 님, 댓글을 남겨보세요`}
+          onSubmit={(content) => submit(content, null)}
+        />
+      ) : (
+        <div className="comment-login">
+          <span>로그인하면 댓글을 남길 수 있어요.</span>
+          <Link to={`/login?next=${encodeURIComponent(pathname)}`} className="btn btn--gold btn--pill">로그인</Link>
+        </div>
+      )}
+
+      {error && <p className="form-alert comment-alert" role="alert">{error}</p>}
+
+      {comments.error && <p className="comments__empty">댓글을 불러오지 못했어요.</p>}
+      {comments.data && list.length === 0 && <p className="comments__empty">첫 댓글을 남겨보세요.</p>}
+
+      <ul className="comment-list">
+        {list.map((c) => {
+          const mine = user && c.authorId === user.id;
+          const rootId = c.parentId ?? c.id; // 답글의 답글은 같은 댓글 아래로
+          return (
+            <li key={c.id} className={`comment ${c.reply ? 'comment--reply' : ''}`}>
+              <div className="comment__meta">
+                <Avatar src={c.avatarUrl} size={26} className="avatar--sm" />
+                <strong>{c.author}</strong>
+                {mine && <span className="comment__mine">내 댓글</span>}
+                <span>{formatDateTime(c.createdAt)}</span>
+              </div>
+              <p className="comment__text">{c.text}</p>
+              <div className="comment__actions">
+                {user && (
+                  <button
+                    type="button"
+                    aria-expanded={replyTo?.id === c.id}
+                    onClick={() => setReplyTo(replyTo?.id === c.id ? null : { id: c.id, rootId, author: c.author })}
+                  >
+                    답글
+                  </button>
+                )}
+                <button type="button">추천 {c.likes}</button>
+                {mine && !hasReplies(c.id) && (
+                  <button type="button" disabled={deletingId === c.id} onClick={() => onDelete(c)}>
+                    {deletingId === c.id ? '삭제 중…' : '삭제'}
+                  </button>
+                )}
+              </div>
+
+              {replyTo?.id === c.id && (
+                <CommentForm
+                  id={`reply-${c.id}`}
+                  className="comment-form--reply"
+                  placeholder={`${replyTo.author} 님에게 답글 남기기`}
+                  autoFocus
+                  onCancel={() => setReplyTo(null)}
+                  onSubmit={(content) => submit(content, replyTo.rootId)}
+                />
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function CommentForm({ id, placeholder, onSubmit, onCancel, autoFocus = false, className = '' }) {
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const content = text.trim();
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!content || busy) return;
+    setError('');
+    setBusy(true);
+    try {
+      await onSubmit(content);
+      setText('');
+    } catch (err) {
+      console.error(err);
+      setError('댓글을 등록하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className={`comment-form ${className}`} onSubmit={handleSubmit}>
+      <div className="comment-form__box">
+        <label htmlFor={id} className="sr-only">댓글 입력</label>
+        <textarea
+          id={id}
+          rows={3}
+          value={text}
+          maxLength={COMMENT_MAX}
+          placeholder={placeholder}
+          autoFocus={autoFocus}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            // Ctrl(⌘)+Enter 로 바로 등록
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit(e);
+          }}
+        />
+        <div className="comment-form__foot">
+          {error ? (
+            <span className="field__msg field__msg--error" role="alert">{error}</span>
+          ) : (
+            <span className="comment-form__count">{text.length} / {COMMENT_MAX}</span>
+          )}
+        </div>
+      </div>
+      <div className="comment-form__btns">
+        {onCancel && (
+          <button type="button" className="btn btn--outline" onClick={onCancel} disabled={busy}>취소</button>
+        )}
+        <button type="submit" className="btn btn--gold" disabled={!content || busy}>
+          {busy ? '등록 중…' : '등록'}
+        </button>
+      </div>
+    </form>
   );
 }

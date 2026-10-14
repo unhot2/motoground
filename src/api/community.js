@@ -35,7 +35,9 @@ const toPost = (row) => ({
 const toComment = (row) => ({
   id: row.id,
   parentId: row.parent_id,
-  author: row.author?.nickname ?? '알 수 없음',
+  authorId: row.author_id ?? null,
+  author: row.author?.nickname ?? '탈퇴한 회원',
+  avatarUrl: row.author?.avatar_url ?? null,
   createdAt: row.created_at,
   text: row.content,
   likes: row.like_count,
@@ -162,11 +164,31 @@ export async function fetchComments(postId) {
 
   const { data, error } = await supabase
     .from('comments')
-    .select('id, parent_id, content, like_count, created_at, author:profiles!comments_author_id_fkey(nickname)')
+    .select('id, parent_id, author_id, content, like_count, created_at, author:profiles!comments_author_id_fkey(nickname, avatar_url)')
     .eq('post_id', Number(postId))
     .order('created_at', { ascending: true });
   if (error) throw error;
   return threadComments(data.map(toComment));
+}
+
+// 댓글 등록 (parentId 가 있으면 답글)
+export const COMMENT_MAX = 1000;
+
+export async function createComment({ postId, authorId, content, parentId = null }) {
+  if (!isSupabaseConfigured) throw new Error('Supabase 설정이 없어 댓글을 등록할 수 없어요.');
+  const { error } = await supabase.from('comments').insert({
+    post_id: Number(postId),
+    author_id: authorId,
+    parent_id: parentId,
+    content,
+  });
+  if (error) throw error;
+}
+
+export async function deleteComment(commentId) {
+  if (!isSupabaseConfigured) throw new Error('Supabase 설정이 없어 댓글을 삭제할 수 없어요.');
+  const { error } = await supabase.from('comments').delete().eq('id', commentId);
+  if (error) throw error;
 }
 
 // 조회수 +1 (같은 브라우저 세션에서는 글마다 한 번만)
