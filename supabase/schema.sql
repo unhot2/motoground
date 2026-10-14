@@ -409,7 +409,8 @@ create policy "listing_likes_delete" on public.listing_likes for delete to authe
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types) values
   ('listing-images', 'listing-images', true, 5242880, array['image/jpeg', 'image/png', 'image/webp']),
   ('post-images',    'post-images',    true, 5242880, array['image/jpeg', 'image/png', 'image/webp', 'image/gif']),
-  ('avatars',        'avatars',        true, 1048576, array['image/jpeg', 'image/png', 'image/webp'])
+  ('avatars',        'avatars',        true, 1048576, array['image/jpeg', 'image/png', 'image/webp']),
+  ('garage-images',  'garage-images',  true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
 
 drop policy if exists "motoground_images_read"   on storage.objects;
@@ -418,23 +419,23 @@ drop policy if exists "motoground_images_update" on storage.objects;
 drop policy if exists "motoground_images_delete" on storage.objects;
 
 create policy "motoground_images_read" on storage.objects for select
-  using (bucket_id in ('listing-images', 'post-images', 'avatars'));
+  using (bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images'));
 
 create policy "motoground_images_insert" on storage.objects for insert to authenticated
   with check (
-    bucket_id in ('listing-images', 'post-images', 'avatars')
+    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images')
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
 create policy "motoground_images_update" on storage.objects for update to authenticated
   using (
-    bucket_id in ('listing-images', 'post-images', 'avatars')
+    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images')
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
 create policy "motoground_images_delete" on storage.objects for delete to authenticated
   using (
-    bucket_id in ('listing-images', 'post-images', 'avatars')
+    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images')
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
@@ -459,3 +460,86 @@ $$;
 
 revoke execute on function public.delete_my_account() from public, anon;
 grant  execute on function public.delete_my_account() to authenticated;
+
+
+-- =====================================================================
+-- 내 차고 — 내 바이크 · 정비/비용 기록 · 소모품 교체 주기 (본인만 보기)
+-- =====================================================================
+create table if not exists public.bikes (
+  id              bigint generated always as identity primary key,
+  owner_id        uuid not null references public.profiles (id) on delete cascade,
+  nickname        text check (char_length(nickname) <= 20),           -- 별명 (예: 검둥이)
+  brand           text not null check (char_length(brand) between 1 and 30),
+  model           text not null check (char_length(model) between 1 and 40),
+  model_year      int  check (model_year between 1950 and 2100),
+  displacement_cc int  check (displacement_cc > 0),
+  genre           text check (genre in ('replica', 'naked', 'tourer', 'adventure', 'cruiser', 'scooter', 'classic', 'offroad', 'etc')),
+  purchased_on    date,
+  purchase_km     int  check (purchase_km >= 0),
+  current_km      int  not null default 0 check (current_km >= 0),
+  image_urls      text[] not null default '{}',                       -- garage-images 저장소 주소, 0번이 대표 사진
+  is_main         boolean not null default false,                     -- 대표 바이크 (1인 1대)
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+create index if not exists bikes_owner_idx on public.bikes (owner_id, created_at);
+create unique index if not exists bikes_one_main_idx on public.bikes (owner_id) where is_main;
+
+drop trigger if exists bikes_touch on public.bikes;
+create trigger bikes_touch before update on public.bikes
+  for each row execute function public.touch_updated_at();
+
+-- 정비·주유·보험·용품 등 비용 기록
+create table if not exists public.bike_logs (
+  id           bigint generated always as identity primary key,
+  bike_id      bigint not null references public.bikes (id) on delete cascade,
+  owner_id     uuid   not null references public.profiles (id) on delete cascade,
+  category     text   not null default 'maintenance'
+               check (category in ('maintenance', 'fuel', 'insurance', 'gear', 'etc')),
+  items        text[] not null default '{}',                          -- 소모품 키(engine_oil 등) 또는 직접 입력한 이름
+  performed_on date   not null default current_date,
+  odometer_km  int    check (odometer_km >= 0),
+  cost         int    not null default 0 check (cost >= 0),           -- 원 단위
+  shop         text   check (char_length(shop) <= 40),                -- 정비한 곳
+  memo         text   check (char_length(memo) <= 500),
+  image_urls   text[] not null default '{}',                          -- 영수증 사진
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists bike_logs_bike_idx  on public.bike_logs (bike_id, performed_on desc);
+create index if not exists bike_logs_owner_idx on public.bike_logs (owner_id);
+
+-- 소모품 교체 주기 (사용자가 바꾼 값만 저장, 나머지는 화면의 기본값 사용)
+create table if not exists public.bike_intervals (
+  bike_id         bigint not null references public.bikes (id) on delete cascade,
+  item_key        text   not null,
+  interval_km     int    check (interval_km > 0),
+  interval_months int    check (interval_months > 0),
+  primary key (bike_id, item_key)
+);
+
+alter table public.bikes          enable row level security;
+alter table public.bike_logs      enable row level security;
+alter table public.bike_intervals enable row level security;
+
+-- 바이크: 본인 것만
+drop policy if exists "bikes_owner" on public.bikes;
+create policy "bikes_owner" on public.bikes for all to authenticated
+  using (owner_id = auth.uid())
+  with check (owner_id = auth.uid());
+
+-- 기록: 본인 것만, 내 바이크에만 추가
+drop policy if exists "bike_logs_owner" on public.bike_logs;
+create policy "bike_logs_owner" on public.bike_logs for all to authenticated
+  using (owner_id = auth.uid())
+  with check (
+    owner_id = auth.uid()
+    and exists (select 1 from public.bikes b where b.id = bike_id and b.owner_id = auth.uid())
+  );
+
+-- 교체 주기: 내 바이크 것만
+drop policy if exists "bike_intervals_owner" on public.bike_intervals;
+create policy "bike_intervals_owner" on public.bike_intervals for all to authenticated
+  using      (exists (select 1 from public.bikes b where b.id = bike_id and b.owner_id = auth.uid()))
+  with check (exists (select 1 from public.bikes b where b.id = bike_id and b.owner_id = auth.uid()));

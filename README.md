@@ -41,6 +41,9 @@ Supabase 설정 전에는 예시(더미) 데이터로 화면이 표시됩니다.
 | `/my` | 내 정보: 프로필 카드, 활동 요약, 작성글·댓글·추천한 글 (로그인 필요) |
 | `/my/edit` | 프로필 수정 (사진, 닉네임, 내 바이크, 활동 지역) |
 | `/my/account` | 비밀번호 변경, 로그아웃, 회원 탈퇴 |
+| `/garage` | 내 차고: 내 바이크 목록과 소모품 상태 (로그인 필요) |
+| `/garage/new`, `/garage/:id/edit` | 바이크 등록·수정 |
+| `/garage/:id` | 바이크 상세: 소모품 상태, 정비 기록, 비용 |
 
 > 회원 탈퇴는 `schema.sql` 의 `delete_my_account` 함수를 씁니다. 예전에 schema.sql 을 실행했다면 한 번 더 Run 해 주세요 (다시 실행해도 안전합니다).
 
@@ -75,8 +78,11 @@ update public.profiles set role = 'admin' where nickname = '내닉네임';
 | `listings` | 중고 매물 (브랜드, 모델, 장르, 연식, 주행거리, 배기량, 가격, 지역, 판매상태) |
 | `listing_images` | 매물 사진 (0번이 대표 사진) |
 | `listing_likes` | 매물 찜 |
+| `bikes` | 내 차고 바이크 (본인만 보기) |
+| `bike_logs` | 정비·주유·보험·용품 비용 기록 |
+| `bike_intervals` | 소모품 교체 주기 (사용자가 바꾼 값) |
 
-사진 저장소(Storage): `listing-images`, `post-images`, `avatars` — 누구나 보기, 로그인 회원은 자기 폴더(`{회원id}/파일명`)에만 업로드.
+사진 저장소(Storage): `listing-images`, `post-images`, `avatars`, `garage-images` — 누구나 보기, 로그인 회원은 자기 폴더(`{회원id}/파일명`)에만 업로드.
 
 보안 정책(RLS): 읽기는 누구나, 쓰기·수정·삭제는 로그인한 본인만. 공지는 관리자만. 조회수 등 숫자는 회원이 직접 바꿀 수 없음.
 

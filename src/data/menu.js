@@ -9,7 +9,7 @@ export const mainNav = [
   { label: '모델 탐색', to: '/#features' },
   { label: '플레이스', to: '/#features' },
   { label: '용품', to: '/#services' },
-  { label: '내 차고', to: '/#features' },
+  { label: '내 차고', to: '/garage', match: '/garage' },
 ];
 
 export const isActivePath = (match, pathname, hash = '') => {
@@ -47,7 +47,7 @@ export const homeBoardTabs = [
 ];
 
 export const features = [
-  { title: '바이크 관리', desc: '유지비, 소모품 교체시기, 연비가 궁금하다면?', icon: 'wrench' },
+  { title: '바이크 관리', desc: '유지비, 소모품 교체시기, 연비가 궁금하다면?', icon: 'wrench', to: '/garage' },
   { title: '모델 탐색', desc: '모델 제원, 가격, 유지비 비교를 한눈에', icon: 'search' },
   { title: '플레이스', desc: '내 주변 맛집, 모임, 라이딩 코스를 한눈에', icon: 'pin' },
   { title: '최저가 보험', desc: '보험료를 비교하고 가입까지 간편하게', icon: 'umbrella' },
@@ -59,7 +59,7 @@ export const mobileTabs = [
   { label: '커뮤니티', icon: 'chat', to: '/community', match: '/community' },
   { label: '매물', icon: 'bike', to: '/#market' },
   { label: '채팅', icon: 'bubble', to: '/#chat' },
-  { label: '내 차고', icon: 'garage', to: '/#features' },
+  { label: '내 차고', icon: 'garage', to: '/garage', match: '/garage' },
 ];
 
 export const footerColumns = [

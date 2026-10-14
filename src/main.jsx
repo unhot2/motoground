@@ -8,6 +8,7 @@ import './styles/community.css';
 import './styles/auth.css';
 import './styles/my.css';
 import './styles/write.css';
+import './styles/garage.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

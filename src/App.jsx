@@ -14,6 +14,9 @@ import MyPage from './pages/MyPage.jsx';
 import MyEditPage from './pages/MyEditPage.jsx';
 import MyAccountPage from './pages/MyAccountPage.jsx';
 import WritePage from './pages/WritePage.jsx';
+import GaragePage from './pages/GaragePage.jsx';
+import BikeFormPage from './pages/BikeFormPage.jsx';
+import BikeDetailPage from './pages/BikeDetailPage.jsx';
 
 export default function App() {
   return (
@@ -29,6 +32,10 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route element={<RequireAuth />}>
           <Route path="/community/write" element={<WritePage />} />
+          <Route path="/garage" element={<GaragePage />} />
+          <Route path="/garage/new" element={<BikeFormPage />} />
+          <Route path="/garage/:id" element={<BikeDetailPage />} />
+          <Route path="/garage/:id/edit" element={<BikeFormPage />} />
           <Route path="/my" element={<MyLayout />}>
             <Route index element={<MyPage />} />
             <Route path="edit" element={<MyEditPage />} />

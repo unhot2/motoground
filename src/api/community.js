@@ -1,6 +1,7 @@
 // 커뮤니티 데이터 함수
 // Supabase가 설정되어 있으면 DB에서, 아니면 예시 데이터에서 같은 모양으로 돌려줍니다.
 import { supabase, isSupabaseConfigured } from '../lib/supabase.js';
+import { removeImages, uploadImages } from '../lib/storageImages.js';
 import { dummyPosts, dummyComments } from '../data/community.js';
 
 export const PAGE_SIZE = 10;
@@ -277,56 +278,14 @@ export const CONTENT_MAX = 10000;
 export const IMAGE_MAX_COUNT = 10;
 export const IMAGE_MAX_MB = 5;
 const POST_IMAGE_BUCKET = 'post-images';
-const IMAGE_MAX_SIDE = 1920; // 긴 변 기준으로 줄여서 저장
 
 const requireDb = () => {
   if (!isSupabaseConfigured) throw new Error('Supabase 설정이 없어 글을 저장할 수 없어요.');
   return supabase;
 };
 
-// 큰 사진은 줄여서 저장 (GIF 는 움직임 유지를 위해 그대로)
-async function shrinkImage(file) {
-  if (file.type === 'image/gif') return { blob: file, ext: 'gif', type: file.type };
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, IMAGE_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close?.();
-  const toBlob = (type) => new Promise((resolve) => canvas.toBlob(resolve, type, 0.86));
-  const webp = await toBlob('image/webp');
-  if (webp?.type === 'image/webp') return { blob: webp, ext: 'webp', type: 'image/webp' };
-  return { blob: await toBlob('image/jpeg'), ext: 'jpg', type: 'image/jpeg' };
-}
-
-// 사진 여러 장 업로드 → 공개 주소 목록 (순서 유지)
-export async function uploadPostImages(userId, files) {
-  const storage = requireDb().storage.from(POST_IMAGE_BUCKET);
-  const urls = [];
-  for (const file of files) {
-    const { blob, ext, type } = await shrinkImage(file);
-    const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { error } = await storage.upload(path, blob, { contentType: type, upsert: false });
-    if (error) {
-      await removePostImages(urls); // 중간에 실패하면 이번에 올린 것 정리
-      throw error;
-    }
-    urls.push(storage.getPublicUrl(path).data.publicUrl);
-  }
-  return urls;
-}
-
-// 공개 주소 → 저장소 경로로 바꿔서 삭제 (내 폴더 것만 지워짐)
-export async function removePostImages(urls) {
-  const marker = `/object/public/${POST_IMAGE_BUCKET}/`;
-  const paths = urls
-    .map((u) => (u.includes(marker) ? decodeURIComponent(u.split(marker)[1]) : null))
-    .filter(Boolean);
-  if (!paths.length || !isSupabaseConfigured) return;
-  const { error } = await supabase.storage.from(POST_IMAGE_BUCKET).remove(paths);
-  if (error) console.warn('사진 파일 정리 실패', error);
-}
+export const uploadPostImages = (userId, files) => uploadImages(POST_IMAGE_BUCKET, userId, files);
+export const removePostImages = (urls) => removeImages(POST_IMAGE_BUCKET, urls);
 
 export async function createPost({ authorId, board, title, content, imageUrls, pinned = false }) {
   const { data, error } = await requireDb()

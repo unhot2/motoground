@@ -115,7 +115,7 @@ export default function Header() {
                 <div className="user-menu__list" role="menu">
                   <span className="user-menu__email">{user.email}</span>
                   <Link to="/my" role="menuitem" onClick={() => setUserMenu(false)}>내 정보</Link>
-                  <a href="#garage" role="menuitem" onClick={() => setUserMenu(false)}>내 차고</a>
+                  <Link to="/garage" role="menuitem" onClick={() => setUserMenu(false)}>내 차고</Link>
                   <button type="button" role="menuitem" onClick={handleSignOut}>로그아웃</button>
                 </div>
               )}
