@@ -1,7 +1,20 @@
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
+import { SEARCH_MAX } from '../api/market.js';
 import { popularKeywords } from '../data/menu.js';
 
 export default function Hero() {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
+
+  // 검색어로 중고매물 목록 열기 (비어 있으면 전체 목록)
+  function onSearch(e) {
+    e.preventDefault();
+    const q = query.trim();
+    navigate(q ? `/market?q=${encodeURIComponent(q)}` : '/market');
+  }
+
   return (
     <section id="top" className="hero">
       <div className="container hero__inner">
@@ -22,9 +35,16 @@ export default function Hero() {
             라이더에게 필요한 모든 것을 한 곳에서.
           </p>
 
-          <form className="search" role="search" onSubmit={(e) => e.preventDefault()}>
-            <label htmlFor="hero-search" className="sr-only">바이크 검색</label>
-            <input id="hero-search" type="search" placeholder="찾으시는 바이크를 검색해보세요" />
+          <form className="search" role="search" onSubmit={onSearch}>
+            <label htmlFor="hero-search" className="sr-only">중고매물 검색</label>
+            <input
+              id="hero-search"
+              type="search"
+              value={query}
+              maxLength={SEARCH_MAX}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="찾으시는 바이크를 검색해보세요 (예: MT-07, 혼다)"
+            />
             <button type="submit" className="btn btn--gold search__btn">
               <Icon name="search" size={18} strokeWidth={2} />
               <span>검색</span>
@@ -34,7 +54,7 @@ export default function Hero() {
           <div className="keywords">
             <span className="keywords__label">인기 검색</span>
             {popularKeywords.map((k) => (
-              <a key={k} href="#search" className="chip">{k}</a>
+              <Link key={k.label} to={k.to} className="chip">{k.label}</Link>
             ))}
           </div>
         </div>

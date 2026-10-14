@@ -17,7 +17,14 @@ export const isActivePath = (match, pathname, hash = '') => {
   return pathname.startsWith(match);
 };
 
-export const popularKeywords = ['레플리카', '네이키드', '투어러', '스쿠터', '입문용'];
+// 홈 '인기 검색' — 누르면 중고매물 목록을 해당 필터로 열기 (값은 data/market.js 필터 key)
+export const popularKeywords = [
+  { label: '레플리카', to: '/market?genre=replica' },
+  { label: '네이키드', to: '/market?genre=naked' },
+  { label: '투어러', to: '/market?genre=tourer' },
+  { label: '스쿠터', to: '/market?genre=scooter' },
+  { label: '입문용', to: '/market?cc=u500' }, // 126~500cc 쿼터급
+];
 
 export const services = [
   { label: '내차 골라줘', icon: 'bike', mobile: true },
