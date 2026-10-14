@@ -21,21 +21,6 @@ export default function MarketCards() {
             <span className="round-arrow"><Icon name="arrow" size={20} strokeWidth={2} /></span>
           </div>
         </Link>
-
-        <a href="#new" className="card market__card">
-          <div className="market__top">
-            <span className="label-en">NEW BIKES</span>
-            <span className="market__title">신차</span>
-            <span className="muted">브랜드별 신차 모델과 가격을 비교해보세요</span>
-          </div>
-          <div className="market__bottom">
-            <span className="market__chips">
-              <span className="chip chip--solid">찜한 바이크</span>
-              <span className="chip chip--solid">알림 설정 매물</span>
-            </span>
-            <span className="round-arrow"><Icon name="arrow" size={20} strokeWidth={2} /></span>
-          </div>
-        </a>
       </div>
     </section>
   );

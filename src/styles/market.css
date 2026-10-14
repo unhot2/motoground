@@ -1,6 +1,6 @@
 /* =========================================
    중고 매물 (목록 / 상세 / 등록)
-   홈의 .market(중고·신차 카드)과 겹치지 않게 market-page, listing-* 사용
+   홈의 .market(중고 매물 카드)과 겹치지 않게 market-page, listing-* 사용
    ========================================= */
 .market-page {
   display: flex;
@@ -232,6 +232,10 @@
   padding: 14px 16px 16px;
 }
 .listing-card__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
   font-family: var(--font-en);
   font-size: 12px;
   letter-spacing: 0.16em;

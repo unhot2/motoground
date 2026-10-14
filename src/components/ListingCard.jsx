@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BikeArt from './BikeArt.jsx';
+import { BrandName } from './BrandLogo.jsx';
 import Icon from './Icon.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { fetchMyListingLikes, setListingLike } from '../api/market.js';
@@ -29,7 +30,9 @@ export default function ListingCard({ listing, liked, onLike }) {
           )}
         </div>
         <div className="listing-card__body">
-          <span className="listing-card__brand">{en}</span>
+          <span className="listing-card__brand">
+            <BrandName brand={l.brand} en={en} />
+          </span>
           <strong className="listing-card__model">{l.model}</strong>
           <span className="listing-card__title">{l.title}</span>
           <span className="listing-card__price">{formatPrice(l.price)}</span>

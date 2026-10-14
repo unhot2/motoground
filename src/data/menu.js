@@ -5,7 +5,6 @@ export const mainNav = [
   { label: '홈', to: '/', match: '/' },
   { label: '커뮤니티', to: '/community', match: '/community' },
   { label: '중고매물', to: '/market', match: '/market' },
-  { label: '신차', to: '/#market' },
   { label: '모델 탐색', to: '/explore', match: '/explore' },
   { label: '플레이스', to: '/#features' },
   { label: '용품', to: '/#services' },

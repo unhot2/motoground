@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Avatar from '../components/Avatar.jsx';
 import Icon from '../components/Icon.jsx';
+import { BrandName } from '../components/BrandLogo.jsx';
 import ListingCard, { ListingPhoto, useListingLikes } from '../components/ListingCard.jsx';
 import ShareModal from '../components/ShareModal.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -122,7 +123,11 @@ function ListingDetail({ listing, onStatus }) {
         <aside className="listing-side">
           <section className="card listing-summary">
             <div className="listing-summary__top">
-              <span className="listing-card__brand">{en} · {genreLabel(l.genre) || '기타'}</span>
+              <span className="listing-card__brand">
+                <BrandName brand={l.brand} en={en} />
+                <span aria-hidden="true">·</span>
+                {genreLabel(l.genre) || '기타'}
+              </span>
               {l.status !== 'selling' && <span className={`listing-status listing-status--${l.status} listing-status--inline`}>{statusLabel(l.status)}</span>}
             </div>
             <h1 className="listing-summary__title">{l.title}</h1>

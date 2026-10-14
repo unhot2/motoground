@@ -18,7 +18,7 @@ export default function Hero() {
           </h1>
 
           <p className="hero__lead">
-            중고·신차 매물부터 정비, 보험, 라이딩 코스와 커뮤니티까지.
+            중고 매물부터 정비, 보험, 라이딩 코스와 커뮤니티까지.
             라이더에게 필요한 모든 것을 한 곳에서.
           </p>
 

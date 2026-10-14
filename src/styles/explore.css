@@ -174,6 +174,12 @@
   letter-spacing: 0.16em;
   color: var(--gold);
 }
+.explore-model__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+}
 .explore-model__name {
   font-size: 18px;
   line-height: 1.35;
@@ -202,6 +208,24 @@
 .explore-model__license {
   border: 1px solid var(--line-strong);
   color: var(--text-subtle);
+}
+
+.explore-model__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.explore-model__price strong {
+  color: var(--gold-light);
+  font-size: 18px;
+}
+.explore-model__year {
+  color: var(--text-faint);
+  font-size: 12px;
 }
 
 .explore-note {
@@ -272,5 +296,8 @@
   }
   .explore-model__note {
     font-size: 12px;
+  }
+  .explore-model__price strong {
+    font-size: 16px;
   }
 }

@@ -250,6 +250,15 @@ button {
   background: var(--surface-3);
 }
 
+/* 제조사 로고 (components/BrandLogo.jsx) */
+.brand-logo {
+  flex-shrink: 0;
+  display: inline-block;
+  background: currentColor;
+  -webkit-mask: no-repeat center / contain;
+  mask: no-repeat center / contain;
+}
+
 /* 카드 */
 .card {
   background: var(--surface);
@@ -473,10 +482,10 @@ a.card:hover {
   justify-content: center;
 }
 
-/* ---------- 중고 / 신차 ---------- */
+/* ---------- 중고 매물 ---------- */
 .market {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
 }
 .market__card {
@@ -484,7 +493,7 @@ a.card:hover {
   flex-direction: column;
   justify-content: space-between;
   gap: 40px;
-  min-height: 260px;
+  min-height: 220px;
   padding: 36px;
 }
 .market__top {

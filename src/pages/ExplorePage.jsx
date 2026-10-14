@@ -1,8 +1,10 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import BikeArt from '../components/BikeArt.jsx';
+import { BrandName } from '../components/BrandLogo.jsx';
 import Icon from '../components/Icon.jsx';
 import { findBrand, findModel } from '../data/bikeCatalog.js';
-import { findRideType, levels, rideTypes } from '../data/explore.js';
+import { PRICE_BASIS, findRideType, levels, rideTypes } from '../data/explore.js';
+import { formatPrice } from '../data/market.js';
 
 // 125cc 이하는 원동기 면허, 초과는 2종 소형 면허
 const licenseOf = (cc) => (cc <= 125 ? '원동기' : '2종 소형');
@@ -79,22 +81,23 @@ export default function ExplorePage() {
               <span className="muted-2">{lv.desc}</span>
             </div>
             <div className="explore-grid">
-              {type.models[lv.key].map(([brand, name, note]) => (
-                <ModelCard key={`${brand}/${name}`} brand={brand} name={name} note={note} />
+              {type.models[lv.key].map(([brand, name, note, price]) => (
+                <ModelCard key={`${brand}/${name}`} brand={brand} name={name} note={note} price={price} />
               ))}
             </div>
           </section>
         ))}
 
         <p className="explore-note muted-2">
-          추천 기종은 국내 정식 판매 여부 · 연식에 따라 달라질 수 있어요. 구매 전 판매점에서 확인해 주세요.
+          가격은 {PRICE_BASIS} 기준 국내 공식 수입사 권장소비자가(VAT 포함)예요. 트림 · 프로모션에 따라 달라질 수 있고,
+          '국내 가격 미정'은 2026년식 국내 가격이 공개되지 않은 모델이에요. 구매 전 판매점에서 확인해 주세요.
         </p>
       </div>
     </>
   );
 }
 
-function ModelCard({ brand, name, note }) {
+function ModelCard({ brand, name, note, price }) {
   const model = findModel(brand, name);
   const en = findBrand(brand)?.en ?? brand;
 
@@ -108,7 +111,9 @@ function ModelCard({ brand, name, note }) {
         )}
       </div>
       <div className="explore-model__body">
-        <span className="explore-model__brand">{en}</span>
+        <span className="explore-model__brand">
+          <BrandName brand={brand} en={en} />
+        </span>
         <strong className="explore-model__name">{name}</strong>
         <span className="explore-model__note">{note}</span>
         {model && (
@@ -117,6 +122,16 @@ function ModelCard({ brand, name, note }) {
             <span className="explore-model__license">{licenseOf(model.cc)}</span>
           </span>
         )}
+        <span className="explore-model__price">
+          {price ? (
+            <>
+              <span className="explore-model__year">{price.year}년식</span>
+              <strong>{formatPrice(price.won)}</strong>
+            </>
+          ) : (
+            <span className="explore-model__year">국내 가격 미정</span>
+          )}
+        </span>
       </div>
     </article>
   );
