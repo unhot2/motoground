@@ -3,7 +3,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase.js';
 
 const AuthContext = createContext(null);
 
-const PROFILE_FIELDS = 'id, nickname, avatar_url, bike_model, region, role';
+const PROFILE_FIELDS = 'id, nickname, avatar_url, bike_model, region, role, created_at';
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);

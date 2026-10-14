@@ -437,3 +437,25 @@ create policy "motoground_images_delete" on storage.objects for delete to authen
     bucket_id in ('listing-images', 'post-images', 'avatars')
     and (storage.foldername(name))[1] = auth.uid()::text
   );
+
+
+-- =====================================================================
+-- 회원 탈퇴 — 로그인한 본인 계정만 삭제
+-- 프로필·추천·찜·매물은 함께 지워지고, 게시글·댓글은 '탈퇴한 회원' 글로 남습니다.
+-- (프로필 사진 파일은 화면에서 먼저 지운 뒤 이 함수를 호출합니다)
+-- =====================================================================
+create or replace function public.delete_my_account()
+returns void
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'not authenticated';
+  end if;
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+revoke execute on function public.delete_my_account() from public, anon;
+grant  execute on function public.delete_my_account() to authenticated;

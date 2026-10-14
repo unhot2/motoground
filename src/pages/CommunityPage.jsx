@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
+import Pagination from '../components/Pagination.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import useAsync from '../hooks/useAsync.js';
 import { boards, boardName } from '../data/community.js';
@@ -148,51 +149,11 @@ export default function CommunityPage() {
             )}
           </div>
 
-          {/* 페이지네이션 */}
-          {totalPages > 1 && (
-            <nav className="pagination" aria-label="페이지">
-              <button
-                type="button"
-                className="page-btn"
-                aria-label="이전 페이지"
-                disabled={page === 1}
-                onClick={() => setPage((n) => n - 1)}
-              >
-                ‹
-              </button>
-              {pageNumbers(page, totalPages).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  className={`page-btn ${page === n ? 'is-active' : ''}`}
-                  aria-current={page === n ? 'page' : undefined}
-                  onClick={() => setPage(n)}
-                >
-                  {n}
-                </button>
-              ))}
-              <button
-                type="button"
-                className="page-btn"
-                aria-label="다음 페이지"
-                disabled={page === totalPages}
-                onClick={() => setPage((n) => n + 1)}
-              >
-                ›
-              </button>
-            </nav>
-          )}
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
       </div>
     </>
   );
-}
-
-// 현재 페이지 주변 최대 5개 번호
-function pageNumbers(page, total) {
-  const start = Math.max(1, Math.min(page - 2, total - 4));
-  const end = Math.min(total, start + 4);
-  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 }
 
 function PostRow({ post, notice = false }) {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
+import Avatar from './Avatar.jsx';
 import { mainNav, isActivePath } from '../data/menu.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -9,7 +10,7 @@ export default function Header() {
   const [userMenu, setUserMenu] = useState(false); // 닉네임 드롭다운
   const { pathname, hash, search } = useLocation();
   const navigate = useNavigate();
-  const { user, nickname, loading, signOut } = useAuth();
+  const { user, profile, nickname, loading, signOut } = useAuth();
   const userMenuRef = useRef(null);
 
   // 페이지가 바뀌면 메뉴 닫기
@@ -74,9 +75,9 @@ export default function Header() {
           <div className="header__nav-account">
             {user ? (
               <>
-                <span className="header__nav-nick">
-                  <Icon name="user" size={18} /> {nickname || '회원'} 님
-                </span>
+                <Link to="/my" className="header__nav-nick">
+                  <Avatar src={profile?.avatar_url} size={28} /> {nickname || '회원'} 님
+                </Link>
                 <button type="button" className="header__nav-logout" onClick={handleSignOut}>로그아웃</button>
               </>
             ) : (
@@ -106,14 +107,14 @@ export default function Header() {
                 aria-expanded={userMenu}
                 onClick={() => setUserMenu((v) => !v)}
               >
-                <span className="user-menu__avatar" aria-hidden="true"><Icon name="helmet" size={16} /></span>
+                <Avatar src={profile?.avatar_url} size={32} className="user-menu__avatar" />
                 <span className="user-menu__name">{nickname || '회원'}</span>
                 <Icon name="chevron" size={16} strokeWidth={2} className="user-menu__chev" />
               </button>
               {userMenu && (
                 <div className="user-menu__list" role="menu">
                   <span className="user-menu__email">{user.email}</span>
-                  <a href="#mypage" role="menuitem" onClick={() => setUserMenu(false)}>내 정보</a>
+                  <Link to="/my" role="menuitem" onClick={() => setUserMenu(false)}>내 정보</Link>
                   <a href="#garage" role="menuitem" onClick={() => setUserMenu(false)}>내 차고</a>
                   <button type="button" role="menuitem" onClick={handleSignOut}>로그아웃</button>
                 </div>

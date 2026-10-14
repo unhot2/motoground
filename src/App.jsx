@@ -8,6 +8,11 @@ import SignupPage from './pages/SignupPage.jsx';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
+import RequireAuth from './components/RequireAuth.jsx';
+import MyLayout from './components/MyLayout.jsx';
+import MyPage from './pages/MyPage.jsx';
+import MyEditPage from './pages/MyEditPage.jsx';
+import MyAccountPage from './pages/MyAccountPage.jsx';
 
 export default function App() {
   return (
@@ -21,6 +26,13 @@ export default function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/my" element={<MyLayout />}>
+            <Route index element={<MyPage />} />
+            <Route path="edit" element={<MyEditPage />} />
+            <Route path="account" element={<MyAccountPage />} />
+          </Route>
+        </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

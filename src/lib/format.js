@@ -24,3 +24,10 @@ export function formatDateTime(iso) {
 }
 
 export const formatCount = (n) => (n ?? 0).toLocaleString('ko-KR');
+
+// 가입일 등 날짜만: '2026.10.12'
+export function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`;
+}
