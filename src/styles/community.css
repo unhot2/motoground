@@ -486,6 +486,131 @@ a.board-row:hover {
 .ghost-btn:hover {
   border-color: var(--gold);
 }
+.like-btn.is-active {
+  background: var(--gold);
+  color: var(--on-gold);
+}
+.like-btn.is-active svg {
+  fill: currentColor;
+}
+.like-btn:disabled {
+  cursor: progress;
+}
+
+/* ---------- 공유 모달 ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.65);
+  animation: mg-fade 0.15s ease-out;
+}
+.modal__box {
+  width: 100%;
+  max-width: 420px;
+  padding: 22px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+}
+.modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal__title {
+  margin: 0;
+  font-size: 18px;
+}
+.modal__close {
+  width: 40px;
+  height: 40px;
+  border-color: transparent;
+}
+.share-targets {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+}
+.share-target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 14px;
+  cursor: pointer;
+}
+.share-target__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-3);
+  border: 1px solid var(--line-strong);
+  color: var(--gold-light);
+  transition: border-color 0.15s ease;
+}
+.share-target:hover .share-target__icon {
+  border-color: var(--gold);
+}
+.share-target__icon--kakao {
+  background: #fee500;
+  border-color: #fee500;
+  color: #191919;
+}
+.share-target:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.share-url {
+  display: flex;
+  gap: 8px;
+}
+.share-url input {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 14px;
+}
+.share-url input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+.share-url .btn {
+  height: 46px;
+  padding: 0 18px;
+}
+.share-msg {
+  margin: -8px 0 0;
+  min-height: 20px;
+  color: var(--gold-light);
+  font-size: 13px;
+}
+.share-msg--error {
+  color: #f08a76;
+}
+@keyframes mg-fade {
+  from {
+    opacity: 0;
+  }
+}
 
 /* 댓글 */
 .comments {

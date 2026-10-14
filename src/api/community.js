@@ -191,6 +191,29 @@ export async function deleteComment(commentId) {
   if (error) throw error;
 }
 
+// 내가 이 글을 추천했는지
+export async function fetchMyPostLike(postId, userId) {
+  if (!isSupabaseConfigured || !userId) return false;
+  const { count, error } = await supabase
+    .from('post_likes')
+    .select('post_id', { count: 'exact', head: true })
+    .eq('post_id', Number(postId))
+    .eq('user_id', userId);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+// 게시글 추천 / 추천 취소
+export async function setPostLike({ postId, userId, liked }) {
+  if (!isSupabaseConfigured) throw new Error('Supabase 설정이 없어 추천할 수 없어요.');
+  const table = supabase.from('post_likes');
+  const { error } = liked
+    ? await table.insert({ post_id: Number(postId), user_id: userId })
+    : await table.delete().eq('post_id', Number(postId)).eq('user_id', userId);
+  // 이미 추천한 상태(중복)는 성공으로 봄
+  if (error && error.code !== '23505') throw error;
+}
+
 // 조회수 +1 (같은 브라우저 세션에서는 글마다 한 번만)
 const viewed = new Set();
 export async function increaseView(postId) {

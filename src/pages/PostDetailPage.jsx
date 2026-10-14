@@ -1,11 +1,21 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
 import Avatar from '../components/Avatar.jsx';
+import ShareModal from '../components/ShareModal.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import useAsync from '../hooks/useAsync.js';
 import { boardName } from '../data/community.js';
-import { COMMENT_MAX, createComment, deleteComment, fetchComments, fetchPost, increaseView } from '../api/community.js';
+import {
+  COMMENT_MAX,
+  createComment,
+  deleteComment,
+  fetchComments,
+  fetchMyPostLike,
+  fetchPost,
+  increaseView,
+  setPostLike,
+} from '../api/community.js';
 import { isSupabaseConfigured } from '../lib/supabase.js';
 import { formatCount, formatDateTime } from '../lib/format.js';
 import NotFoundPage from './NotFoundPage.jsx';
@@ -14,9 +24,11 @@ export default function PostDetailPage() {
   const { id } = useParams();
   const detail = useAsync(() => fetchPost(id), [id]);
   const comments = useAsync(() => fetchComments(id), [id]);
+  const [likes, setLikes] = useState(null); // 추천 누른 뒤 바뀐 추천 수
 
   useEffect(() => {
     if (detail.data?.post) increaseView(detail.data.post.id);
+    setLikes(null);
   }, [detail.data]);
 
   if (detail.loading) {
@@ -39,6 +51,7 @@ export default function PostDetailPage() {
   const boardPath = `/community/${post.board}`;
   const paragraphs = post.content.split(/\n{2,}|\r\n\r\n/).filter((t) => t.trim());
   const commentCount = comments.data ? comments.data.length : post.comments;
+  const likeCount = likes ?? post.likes;
 
   return (
     <div className="container post-page">
@@ -61,7 +74,7 @@ export default function PostDetailPage() {
             <span className="dot" aria-hidden="true">·</span>
             <span>{formatDateTime(post.createdAt)}</span>
             <span className="article__stats">
-              조회 {formatCount(post.views)} · 댓글 {commentCount} · 추천 {post.likes}
+              조회 {formatCount(post.views)} · 댓글 {commentCount} · 추천 {likeCount}
             </span>
           </div>
         </header>
@@ -87,16 +100,7 @@ export default function PostDetailPage() {
           )}
         </div>
 
-        <div className="article__actions">
-          <button type="button" className="like-btn">
-            <Icon name="heart" size={20} strokeWidth={1.8} />
-            <span>추천 {post.likes}</span>
-          </button>
-          <button type="button" className="ghost-btn">
-            <Icon name="share" size={18} strokeWidth={1.8} />
-            <span>공유</span>
-          </button>
-        </div>
+        <PostActions post={post} likes={likeCount} onLikesChange={setLikes} />
       </article>
 
       <CommentSection postId={post.id} comments={comments} fallbackCount={post.comments} />
@@ -122,6 +126,77 @@ export default function PostDetailPage() {
       <div className="post-page__footer">
         <Link to={boardPath} className="btn btn--outline btn--pill">목록으로</Link>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------
+// 게시글 추천 · 공유
+// ---------------------------------------------------------------------
+function PostActions({ post, likes, onLikesChange }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const myLike = useAsync(() => fetchMyPostLike(post.id, user?.id), [post.id, user?.id]);
+  const [liked, setLiked] = useState(null); // 누른 뒤 상태 (null 이면 서버 값)
+  const [busy, setBusy] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const closeShare = useCallback(() => setShareOpen(false), []);
+
+  useEffect(() => setLiked(null), [post.id, user?.id]);
+  const isLiked = liked ?? Boolean(myLike.data);
+
+  async function onLike() {
+    if (!user) {
+      navigate(`/login?next=${encodeURIComponent(pathname)}`);
+      return;
+    }
+    if (busy || myLike.loading) return;
+    const next = !isLiked;
+    // 먼저 화면에 반영하고, 실패하면 되돌림
+    setLiked(next);
+    onLikesChange(Math.max(0, likes + (next ? 1 : -1)));
+    setBusy(true);
+    try {
+      await setPostLike({ postId: post.id, userId: user.id, liked: next });
+    } catch (err) {
+      console.error(err);
+      setLiked(!next);
+      onLikesChange(likes);
+      window.alert('추천하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const url = `${window.location.origin}/community/post/${post.id}`;
+  const description = post.content.replace(/\s+/g, ' ').trim().slice(0, 80) || `모토그라운드 ${boardName(post.board)}`;
+
+  return (
+    <div className="article__actions">
+      <button
+        type="button"
+        className={`like-btn ${isLiked ? 'is-active' : ''}`}
+        aria-pressed={isLiked}
+        onClick={onLike}
+        disabled={busy}
+      >
+        <Icon name="heart" size={20} strokeWidth={1.8} />
+        <span>추천 {formatCount(likes)}</span>
+      </button>
+      <button type="button" className="ghost-btn" onClick={() => setShareOpen(true)} aria-haspopup="dialog">
+        <Icon name="share" size={18} strokeWidth={1.8} />
+        <span>공유</span>
+      </button>
+
+      <ShareModal
+        open={shareOpen}
+        onClose={closeShare}
+        url={url}
+        title={post.title}
+        description={description}
+        imageUrl={post.imageUrls[0]}
+      />
     </div>
   );
 }
