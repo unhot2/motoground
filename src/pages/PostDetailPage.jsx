@@ -10,6 +10,7 @@ import {
   COMMENT_MAX,
   createComment,
   deleteComment,
+  deletePost,
   fetchComments,
   fetchMyPostLike,
   fetchPost,
@@ -25,6 +26,9 @@ export default function PostDetailPage() {
   const detail = useAsync(() => fetchPost(id), [id]);
   const comments = useAsync(() => fetchComments(id), [id]);
   const [likes, setLikes] = useState(null); // 추천 누른 뒤 바뀐 추천 수
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (detail.data?.post) increaseView(detail.data.post.id);
@@ -52,6 +56,20 @@ export default function PostDetailPage() {
   const paragraphs = post.content.split(/\n{2,}|\r\n\r\n/).filter((t) => t.trim());
   const commentCount = comments.data ? comments.data.length : post.comments;
   const likeCount = likes ?? post.likes;
+  const canManage = Boolean(user) && (post.authorId === user.id || isAdmin);
+
+  async function onDeletePost() {
+    if (!window.confirm('이 글을 삭제할까요? 댓글과 사진도 함께 삭제돼요.')) return;
+    setDeleting(true);
+    try {
+      await deletePost(post);
+      navigate(boardPath, { replace: true });
+    } catch (err) {
+      console.error(err);
+      window.alert('글을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="container post-page">
@@ -125,6 +143,21 @@ export default function PostDetailPage() {
 
       <div className="post-page__footer">
         <Link to={boardPath} className="btn btn--outline btn--pill">목록으로</Link>
+        {canManage && (
+          <div className="post-page__manage">
+            <Link to={`/community/write?edit=${post.id}`} className="btn btn--outline btn--pill">
+              <Icon name="pen" size={16} strokeWidth={2} /> 수정
+            </Link>
+            <button
+              type="button"
+              className="btn btn--outline btn--pill my-btn-danger"
+              onClick={onDeletePost}
+              disabled={deleting}
+            >
+              <Icon name="trash" size={16} strokeWidth={2} /> {deleting ? '삭제 중…' : '삭제'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

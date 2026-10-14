@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
 import Pagination from '../components/Pagination.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -17,8 +17,7 @@ const sorts = [
 
 export default function CommunityPage() {
   const { board = 'all' } = useParams();
-  const { pathname } = useLocation();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [sort, setSort] = useState('latest');
   const [page, setPage] = useState(1);
   const current = boards.find((b) => b.slug === board);
@@ -109,10 +108,7 @@ export default function CommunityPage() {
                   <Icon name="search" size={18} strokeWidth={2} />
                 </button>
               </form>
-              <Link
-                to={user ? '#write' : `/login?next=${encodeURIComponent(pathname)}`}
-                className="btn btn--gold write-btn"
-              >
+              <Link to={writeLink(board, user, isAdmin)} className="btn btn--gold write-btn">
                 <Icon name="pen" size={18} strokeWidth={2} />
                 <span>글쓰기</span>
               </Link>
@@ -154,6 +150,13 @@ export default function CommunityPage() {
       </div>
     </>
   );
+}
+
+// 글쓰기 버튼: 지금 게시판을 미리 선택, 비로그인이면 로그인 후 글쓰기로
+function writeLink(board, user, isAdmin) {
+  const canPick = board !== 'all' && (board !== 'notice' || isAdmin);
+  const to = canPick ? `/community/write?board=${board}` : '/community/write';
+  return user ? to : `/login?next=${encodeURIComponent(to)}`;
 }
 
 function PostRow({ post, notice = false }) {

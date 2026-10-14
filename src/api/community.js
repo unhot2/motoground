@@ -14,7 +14,7 @@ const SORT_COLUMNS = {
 const SORT_KEYS = { latest: 'createdAt', views: 'views', comments: 'comments', likes: 'likes' };
 
 const POST_FIELDS =
-  'id, board_slug, title, is_pinned, view_count, comment_count, like_count, created_at, author:profiles!posts_author_id_fkey(nickname)';
+  'id, board_slug, author_id, title, is_pinned, view_count, comment_count, like_count, created_at, author:profiles!posts_author_id_fkey(nickname)';
 // ↑ posts 와 profiles 는 작성자(author_id)·추천(post_likes) 두 경로로 이어져 있어서 작성자 쪽을 명시
 
 // DB 행 → 화면에서 쓰는 모양
@@ -24,6 +24,7 @@ const toPost = (row) => ({
   title: row.title,
   content: row.content ?? '',
   imageUrls: row.image_urls ?? [],
+  authorId: row.author_id ?? null,
   author: row.author?.nickname ?? '알 수 없음',
   createdAt: row.created_at,
   views: row.view_count,
@@ -229,4 +230,93 @@ export async function increaseView(postId) {
   if (!isSupabaseConfigured) return;
   const { error } = await supabase.rpc('increment_post_view', { p_post_id: Number(postId) });
   if (error) console.warn('조회수 갱신 실패', error);
+}
+
+// ---------------------------------------------------------------------
+// 글쓰기 · 수정 · 삭제
+// ---------------------------------------------------------------------
+export const TITLE_MAX = 100;
+export const CONTENT_MAX = 10000;
+export const IMAGE_MAX_COUNT = 10;
+export const IMAGE_MAX_MB = 5;
+const POST_IMAGE_BUCKET = 'post-images';
+const IMAGE_MAX_SIDE = 1920; // 긴 변 기준으로 줄여서 저장
+
+const requireDb = () => {
+  if (!isSupabaseConfigured) throw new Error('Supabase 설정이 없어 글을 저장할 수 없어요.');
+  return supabase;
+};
+
+// 큰 사진은 줄여서 저장 (GIF 는 움직임 유지를 위해 그대로)
+async function shrinkImage(file) {
+  if (file.type === 'image/gif') return { blob: file, ext: 'gif', type: file.type };
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, IMAGE_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close?.();
+  const toBlob = (type) => new Promise((resolve) => canvas.toBlob(resolve, type, 0.86));
+  const webp = await toBlob('image/webp');
+  if (webp?.type === 'image/webp') return { blob: webp, ext: 'webp', type: 'image/webp' };
+  return { blob: await toBlob('image/jpeg'), ext: 'jpg', type: 'image/jpeg' };
+}
+
+// 사진 여러 장 업로드 → 공개 주소 목록 (순서 유지)
+export async function uploadPostImages(userId, files) {
+  const storage = requireDb().storage.from(POST_IMAGE_BUCKET);
+  const urls = [];
+  for (const file of files) {
+    const { blob, ext, type } = await shrinkImage(file);
+    const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await storage.upload(path, blob, { contentType: type, upsert: false });
+    if (error) {
+      await removePostImages(urls); // 중간에 실패하면 이번에 올린 것 정리
+      throw error;
+    }
+    urls.push(storage.getPublicUrl(path).data.publicUrl);
+  }
+  return urls;
+}
+
+// 공개 주소 → 저장소 경로로 바꿔서 삭제 (내 폴더 것만 지워짐)
+export async function removePostImages(urls) {
+  const marker = `/object/public/${POST_IMAGE_BUCKET}/`;
+  const paths = urls
+    .map((u) => (u.includes(marker) ? decodeURIComponent(u.split(marker)[1]) : null))
+    .filter(Boolean);
+  if (!paths.length || !isSupabaseConfigured) return;
+  const { error } = await supabase.storage.from(POST_IMAGE_BUCKET).remove(paths);
+  if (error) console.warn('사진 파일 정리 실패', error);
+}
+
+export async function createPost({ authorId, board, title, content, imageUrls, pinned = false }) {
+  const { data, error } = await requireDb()
+    .from('posts')
+    .insert({
+      board_slug: board,
+      author_id: authorId,
+      title,
+      content,
+      image_urls: imageUrls,
+      is_pinned: pinned,
+    })
+    .select('id')
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+export async function updatePost(id, { board, title, content, imageUrls, pinned }) {
+  const fields = { board_slug: board, title, content, image_urls: imageUrls };
+  if (pinned !== undefined) fields.is_pinned = pinned;
+  const { error } = await requireDb().from('posts').update(fields).eq('id', Number(id));
+  if (error) throw error;
+}
+
+export async function deletePost(post) {
+  const { error } = await requireDb().from('posts').delete().eq('id', Number(post.id));
+  if (error) throw error;
+  await removePostImages(post.imageUrls ?? []);
 }

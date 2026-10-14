@@ -13,6 +13,7 @@ import MyLayout from './components/MyLayout.jsx';
 import MyPage from './pages/MyPage.jsx';
 import MyEditPage from './pages/MyEditPage.jsx';
 import MyAccountPage from './pages/MyAccountPage.jsx';
+import WritePage from './pages/WritePage.jsx';
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route element={<RequireAuth />}>
+          <Route path="/community/write" element={<WritePage />} />
           <Route path="/my" element={<MyLayout />}>
             <Route index element={<MyPage />} />
             <Route path="edit" element={<MyEditPage />} />
