@@ -137,6 +137,39 @@ const paths = {
       <path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" />
     </>
   ),
+  // 플레이스
+  cup: (
+    <>
+      <path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" />
+      <path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16M8 3v3M12 3v3" />
+    </>
+  ),
+  utensils: <path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 1-3 4-3 7h3v11" />,
+  parking: (
+    <>
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <path d="M10 16V8h3a2.5 2.5 0 0 1 0 5h-3" />
+    </>
+  ),
+  tent: <path d="M3 20h18M12 4l-8 16M12 4l8 16M12 12l-3 8M12 12l3 8" />,
+  drop: <path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" />,
+  flag: <path d="M5 21V4M5 4h11l-2 4 2 4H5" />,
+  star: <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />,
+  phone: <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" />,
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 8v4l3 2" />
+    </>
+  ),
+  route: <path d="M3 11l18-8-8 18-2-8z" />,
+  locate: (
+    <>
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="1.5" />
+      <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+    </>
+  ),
 };
 
 export default function Icon({ name, size = 24, strokeWidth = 1.6, className }) {

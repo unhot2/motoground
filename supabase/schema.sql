@@ -429,7 +429,8 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
   ('listing-images', 'listing-images', true, 5242880, array['image/jpeg', 'image/png', 'image/webp']),
   ('post-images',    'post-images',    true, 5242880, array['image/jpeg', 'image/png', 'image/webp', 'image/gif']),
   ('avatars',        'avatars',        true, 1048576, array['image/jpeg', 'image/png', 'image/webp']),
-  ('garage-images',  'garage-images',  true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
+  ('garage-images',  'garage-images',  true, 5242880, array['image/jpeg', 'image/png', 'image/webp']),
+  ('place-images',   'place-images',   true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
 
 drop policy if exists "motoground_images_read"   on storage.objects;
@@ -438,23 +439,23 @@ drop policy if exists "motoground_images_update" on storage.objects;
 drop policy if exists "motoground_images_delete" on storage.objects;
 
 create policy "motoground_images_read" on storage.objects for select
-  using (bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images'));
+  using (bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images', 'place-images'));
 
 create policy "motoground_images_insert" on storage.objects for insert to authenticated
   with check (
-    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images')
+    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images', 'place-images')
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
 create policy "motoground_images_update" on storage.objects for update to authenticated
   using (
-    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images')
+    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images', 'place-images')
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
 create policy "motoground_images_delete" on storage.objects for delete to authenticated
   using (
-    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images')
+    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images', 'place-images')
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
@@ -562,3 +563,148 @@ drop policy if exists "bike_intervals_owner" on public.bike_intervals;
 create policy "bike_intervals_owner" on public.bike_intervals for all to authenticated
   using      (exists (select 1 from public.bikes b where b.id = bike_id and b.owner_id = auth.uid()))
   with check (exists (select 1 from public.bikes b where b.id = bike_id and b.owner_id = auth.uid()));
+
+
+-- =====================================================================
+-- 플레이스 — 라이더 카페 · 정비소 · 바이크 주차 등 (운영자가 등록, 누구나 보기)
+-- 예전에 schema.sql 을 실행했어도 다시 Run 하면 이 부분과 사진 저장소만 추가됩니다
+-- =====================================================================
+create table if not exists public.places (
+  id             bigint generated always as identity primary key,
+  category       text   not null check (category in ('cafe', 'food', 'repair', 'parking', 'gear', 'stay', 'wash', 'school')),
+  name           text   not null check (char_length(name) between 1 and 60),
+  address        text   not null check (char_length(address) between 1 and 200),
+  region         text   not null,                                     -- 시·도 (서울, 경기 ...) 필터용
+  lat            double precision check (lat between -90 and 90),     -- 지도 좌표 (없으면 지도에만 안 보임)
+  lng            double precision check (lng between -180 and 180),
+  phone          text   check (char_length(phone) <= 30),
+  hours          text   check (char_length(hours) <= 200),            -- 영업시간 (자유 입력)
+  description    text   not null default '' check (char_length(description) <= 2000),
+  tags           text[] not null default '{}',                        -- 라이더 태그 (bike_parking 등, 화면 data/place.js)
+  image_urls     text[] not null default '{}',                        -- place-images 저장소 주소, 0번이 대표 사진
+  kakao_place_id text,                                                -- 카카오맵 장소 id (검색으로 등록했을 때)
+  is_published   boolean not null default true,                       -- false 면 운영자만 보임
+  created_by     uuid   references public.profiles (id) on delete set null,
+  review_count   int    not null default 0,                           -- 트리거로 자동 계산
+  rating_sum     int    not null default 0,                           -- 별점 합계 (평균 = rating_sum / review_count)
+  like_count     int    not null default 0,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+create index if not exists places_category_idx on public.places (category, created_at desc);
+create index if not exists places_region_idx   on public.places (region);
+create index if not exists places_geo_idx      on public.places (lat, lng);
+
+drop trigger if exists places_touch on public.places;
+create trigger places_touch before update on public.places
+  for each row execute function public.touch_updated_at();
+
+-- 후기 (한 장소에 회원당 하나)
+create table if not exists public.place_reviews (
+  id         bigint generated always as identity primary key,
+  place_id   bigint not null references public.places (id) on delete cascade,
+  author_id  uuid   not null references public.profiles (id) on delete cascade,
+  rating     int    not null check (rating between 1 and 5),
+  content    text   not null check (char_length(content) between 1 and 500),
+  created_at timestamptz not null default now(),
+  unique (place_id, author_id)
+);
+
+create index if not exists place_reviews_place_idx on public.place_reviews (place_id, created_at desc);
+
+-- 찜
+create table if not exists public.place_likes (
+  place_id   bigint not null references public.places (id) on delete cascade,
+  user_id    uuid   not null references public.profiles (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (place_id, user_id)
+);
+
+-- 후기 수 · 별점 합계
+create or replace function public.sync_place_review_stats()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'INSERT' then
+    update places set review_count = review_count + 1, rating_sum = rating_sum + new.rating where id = new.place_id;
+  elsif tg_op = 'DELETE' then
+    update places set review_count = greatest(review_count - 1, 0), rating_sum = greatest(rating_sum - old.rating, 0) where id = old.place_id;
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists place_reviews_stats on public.place_reviews;
+create trigger place_reviews_stats after insert or delete on public.place_reviews
+  for each row execute function public.sync_place_review_stats();
+
+-- 찜 수
+create or replace function public.sync_place_like_count()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'INSERT' then
+    update places set like_count = like_count + 1 where id = new.place_id;
+  elsif tg_op = 'DELETE' then
+    update places set like_count = greatest(like_count - 1, 0) where id = old.place_id;
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists place_likes_count on public.place_likes;
+create trigger place_likes_count after insert or delete on public.place_likes
+  for each row execute function public.sync_place_like_count();
+
+-- 운영자가 장소를 수정할 때 후기 수·별점·찜 수가 덮어써지지 않게 보호
+create or replace function public.protect_place_counters()
+returns trigger language plpgsql as $$
+begin
+  if current_user in ('anon', 'authenticated') then
+    new.review_count := old.review_count;
+    new.rating_sum   := old.rating_sum;
+    new.like_count   := old.like_count;
+    new.created_by   := old.created_by;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists places_protect on public.places;
+create trigger places_protect before update on public.places
+  for each row execute function public.protect_place_counters();
+
+alter table public.places        enable row level security;
+alter table public.place_reviews enable row level security;
+alter table public.place_likes   enable row level security;
+
+-- 장소: 공개된 것은 누구나, 등록·수정·삭제는 운영자만
+drop policy if exists "places_read"   on public.places;
+drop policy if exists "places_insert" on public.places;
+drop policy if exists "places_update" on public.places;
+drop policy if exists "places_delete" on public.places;
+create policy "places_read"   on public.places for select using (is_published or public.is_admin());
+create policy "places_insert" on public.places for insert to authenticated
+  with check (public.is_admin() and created_by = auth.uid() and review_count = 0 and rating_sum = 0 and like_count = 0);
+create policy "places_update" on public.places for update to authenticated using (public.is_admin());
+create policy "places_delete" on public.places for delete to authenticated using (public.is_admin());
+
+-- 후기: 누구나 보기, 회원은 공개된 장소에 자기 후기만 쓰고 지우기 (운영자는 삭제 가능)
+drop policy if exists "place_reviews_read"   on public.place_reviews;
+drop policy if exists "place_reviews_insert" on public.place_reviews;
+drop policy if exists "place_reviews_delete" on public.place_reviews;
+create policy "place_reviews_read"   on public.place_reviews for select using (true);
+create policy "place_reviews_insert" on public.place_reviews for insert to authenticated
+  with check (
+    author_id = auth.uid()
+    and exists (select 1 from public.places p where p.id = place_id and p.is_published)
+  );
+create policy "place_reviews_delete" on public.place_reviews for delete to authenticated
+  using (author_id = auth.uid() or public.is_admin());
+
+-- 찜: 본인 것만
+drop policy if exists "place_likes_read"   on public.place_likes;
+drop policy if exists "place_likes_insert" on public.place_likes;
+drop policy if exists "place_likes_delete" on public.place_likes;
+create policy "place_likes_read"   on public.place_likes for select to authenticated using (user_id = auth.uid());
+create policy "place_likes_insert" on public.place_likes for insert to authenticated with check (user_id = auth.uid());
+create policy "place_likes_delete" on public.place_likes for delete to authenticated using (user_id = auth.uid());

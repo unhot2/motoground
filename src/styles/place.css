@@ -1,0 +1,559 @@
+/* =========================================
+   플레이스 (지도 목록 / 상세 / 운영자 등록)
+   상세 화면의 큰 틀은 market.css 의 listing-* 를 같이 씀
+   ========================================= */
+.place-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 32px;
+  padding-bottom: 96px;
+}
+
+/* ---------- 검색 · 분류 ---------- */
+.place-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+}
+.place-filter__row {
+  display: flex;
+  gap: 8px;
+}
+.place-search {
+  flex: 1;
+  width: auto;
+  padding-left: 14px;
+}
+.place-sido {
+  width: 130px;
+  height: 44px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.place-sido.is-set {
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+.place-locate {
+  height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.place-locate.is-on {
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+.place-locate:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.write-chip.place-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------- 목록 + 지도 ---------- */
+.place-layout {
+  display: grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+.place-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.place-list__count {
+  margin: 0 0 2px;
+  color: var(--text-2);
+  font-size: 15px;
+}
+.place-list__count .text-gold {
+  font-family: var(--font-en);
+  font-size: 18px;
+  font-weight: 700;
+}
+.place-layout__map {
+  position: sticky;
+  top: calc(var(--header-h) + 16px);
+  height: calc(100vh - var(--header-h) - 32px);
+  min-height: 420px;
+}
+
+/* 지도 */
+.place-map {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+.place-map__canvas {
+  width: 100%;
+  height: 100%;
+}
+.place-map__notice {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  color: var(--text-faint);
+  font-size: 14px;
+  text-align: center;
+}
+.place-map--mini {
+  height: 220px;
+  border: 0;
+  border-radius: 0;
+}
+
+/* 지도 핀 (카카오 CustomOverlay 안에 들어가는 요소) */
+.place-pin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+.place-pin__dot {
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--bg);
+  border-radius: 50% 50% 50% 0;
+  background: var(--gold);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.place-pin__name {
+  position: absolute;
+  bottom: 26px;
+  display: none;
+  padding: 4px 10px;
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--gold-light);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.place-pin:hover .place-pin__name,
+.place-pin.is-active .place-pin__name {
+  display: block;
+}
+.place-pin.is-active .place-pin__dot {
+  background: var(--gold-hover);
+  transform: rotate(-45deg) scale(1.3);
+}
+.place-me {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #3d8bfd;
+  box-shadow: 0 0 0 6px rgba(61, 139, 253, 0.25);
+}
+
+/* ---------- 장소 카드 ---------- */
+.place-card {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  color: inherit;
+}
+a.place-card:hover,
+.place-card.is-active {
+  border-color: var(--gold);
+  color: inherit;
+}
+.place-card--skeleton {
+  min-height: 112px;
+  animation: mg-pulse 1.4s ease-in-out infinite;
+}
+.place-card__thumb {
+  flex-shrink: 0;
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  color: var(--text-faint);
+}
+.place-card__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.place-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.place-card__cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+}
+.place-card__name {
+  overflow: hidden;
+  font-size: 16px;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.place-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  color: var(--text-subtle);
+  font-size: 13px;
+}
+.place-card__dist {
+  color: var(--gold-light);
+  font-weight: 700;
+}
+.place-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.place-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: 12px;
+}
+.place-tag--lg {
+  padding: 5px 12px;
+  font-size: 14px;
+}
+.place-tag--lg svg {
+  color: var(--gold);
+}
+.place-badge {
+  padding: 1px 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+/* 별점 */
+.place-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--gold-light);
+  font-weight: 700;
+}
+.place-rating svg {
+  fill: currentColor;
+}
+.place-rating--lg {
+  margin: 0;
+  font-size: 15px;
+}
+.stars {
+  display: inline-flex;
+  gap: 1px;
+  color: var(--line-strong);
+}
+.stars svg {
+  fill: currentColor;
+}
+.stars .is-on {
+  color: var(--gold);
+}
+
+/* ---------- 상세 ---------- */
+.place-summary__none {
+  margin: 0;
+}
+.place-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.place-info > div {
+  display: flex;
+  gap: 10px;
+}
+.place-info dt {
+  flex-shrink: 0;
+  padding-top: 3px;
+  color: var(--gold);
+}
+.place-info dd {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 15px;
+  word-break: break-word;
+}
+.place-info__hours {
+  white-space: pre-wrap;
+}
+.place-admin {
+  margin-top: 4px;
+}
+.place-mini {
+  overflow: hidden;
+}
+.place-mini__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.place-gallery__empty {
+  aspect-ratio: auto;
+  height: 220px;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--text-faint);
+  font-size: 14px;
+}
+.place-detail__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* 후기 */
+.place-review-login {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+}
+.place-review-login a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.place-review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.place-review-form__stars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.place-review-form__stars .muted-2 {
+  margin-left: 8px;
+}
+.place-star {
+  display: flex;
+  padding: 2px;
+  border: 0;
+  background: none;
+  color: var(--line-strong);
+  cursor: pointer;
+}
+.place-star svg {
+  fill: currentColor;
+}
+.place-star.is-on,
+.place-star:hover {
+  color: var(--gold);
+}
+.place-review-form__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.place-review-form__foot .field__msg {
+  margin: 0;
+}
+.place-reviews {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.place-reviews__empty {
+  margin: 8px 0 0;
+}
+.place-review {
+  display: flex;
+  gap: 12px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.place-review:first-child {
+  border-top: 0;
+}
+.place-review__body {
+  flex: 1;
+  min-width: 0;
+}
+.place-review__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 14px;
+}
+.place-review__del {
+  min-height: 0;
+  margin-left: auto;
+  font-size: 13px;
+}
+.place-review__text {
+  margin: 6px 0 0;
+  color: var(--text-2);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.place-nearby {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* ---------- 운영자 등록 ---------- */
+.place-form__addr {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 16px;
+}
+.place-kakao__results {
+  display: flex;
+  flex-direction: column;
+  max-height: 280px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  list-style: none;
+}
+.place-kakao__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.place-kakao__item strong {
+  color: var(--text);
+  font-size: 15px;
+}
+.place-kakao__item:hover,
+.place-kakao__item.is-active {
+  background: var(--surface-2);
+}
+.place-kakao__item.is-active strong {
+  color: var(--gold-light);
+}
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1080px) {
+  .place-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* 작은 화면에서는 지도를 목록 위에 */
+  .place-layout__map {
+    position: static;
+    order: -1;
+    height: 360px;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .place-page {
+    gap: 16px;
+    padding-top: 20px;
+    padding-bottom: 64px;
+  }
+  .place-filter {
+    padding: 14px;
+    gap: 12px;
+  }
+  .place-filter__row {
+    flex-wrap: wrap;
+  }
+  .place-search {
+    flex-basis: 100%;
+  }
+  .place-sido {
+    flex: 1;
+    width: auto;
+  }
+  .place-cats {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 -14px;
+    padding: 0 14px;
+    scrollbar-width: none;
+  }
+  .place-cats .write-chip {
+    flex-shrink: 0;
+    min-height: 36px;
+    padding: 0 14px;
+  }
+  .place-layout__map {
+    height: 280px;
+  }
+  .place-card__thumb {
+    width: 72px;
+    height: 72px;
+  }
+  .place-nearby {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .place-form__addr {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
