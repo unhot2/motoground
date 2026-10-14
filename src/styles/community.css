@@ -176,10 +176,10 @@
 .board-search {
   display: flex;
   align-items: center;
-  width: 260px;
+  width: 340px;
   max-width: 100%;
   height: 44px;
-  padding: 0 4px 0 14px;
+  padding: 0 4px 0 4px;
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
@@ -200,6 +200,79 @@
 }
 .board-search input::placeholder {
   color: var(--text-faint);
+}
+.board-search input::-webkit-search-cancel-button {
+  filter: invert(0.6);
+}
+.board-search__field {
+  flex-shrink: 0;
+  height: 32px;
+  margin-right: 10px;
+  min-width: 104px; /* '제목+내용' 이 잘리지 않게 */
+  padding: 0 22px 0 6px;
+  border: 0;
+  border-right: 1px solid var(--line-strong);
+  border-radius: 0;
+  /* 기본 화살표는 위치 조절이 안 돼서 직접 그림 (오른쪽 4px 여백) */
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23b8ae9c' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 4px center;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.board-search__field:focus {
+  outline: none;
+  color: var(--gold-light);
+}
+.board-search__field option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* 검색 결과 안내 */
+.search-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 14px;
+}
+.search-summary__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.search-summary__clear:hover {
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+.search-hit {
+  padding: 0 1px;
+  border-radius: 3px;
+  background: rgba(201, 162, 74, 0.3);
+  color: var(--gold-hover);
+}
+.board-empty__hint {
+  font-size: 13px;
 }
 .board-search button {
   width: 36px;

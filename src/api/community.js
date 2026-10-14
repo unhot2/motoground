@@ -63,22 +63,59 @@ const byDesc = (key) => (a, b) =>
 
 // ---------------------------------------------------------------------
 // 게시글 목록 (공지 제외, 공지 게시판은 공지 포함)
+// query 가 있으면 검색 결과 (공지도 함께 찾음)
+//   field: 'all' 제목+내용 / 'title' 제목 / 'author' 작성자
 // ---------------------------------------------------------------------
-export async function fetchPosts({ board = 'all', sort = 'latest', page = 1 }) {
+export const SEARCH_FIELDS = [
+  { key: 'all', label: '제목+내용' },
+  { key: 'title', label: '제목' },
+  { key: 'author', label: '작성자' },
+];
+export const SEARCH_MAX = 50;
+
+// LIKE 검색에서 % _ \ 를 글자 그대로 찾도록
+const likeEscape = (text) => text.replace(/[\\%_]/g, '\\$&');
+// or() 필터 안에서는 값 전체를 따옴표로 감싸야 쉼표·괄호가 안전함
+const quoteFilter = (text) => `"${text.replace(/["\\]/g, '\\$&')}"`;
+
+function matchesDummy(post, query, field) {
+  const q = query.toLowerCase();
+  if (field === 'author') return post.author.toLowerCase().includes(q);
+  if (field === 'title') return post.title.toLowerCase().includes(q);
+  return post.title.toLowerCase().includes(q) || (post.content ?? '').toLowerCase().includes(q);
+}
+
+export async function fetchPosts({ board = 'all', sort = 'latest', page = 1, query = '', field = 'all' }) {
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
+  const keyword = query.trim().slice(0, SEARCH_MAX);
 
   if (!isSupabaseConfigured) {
     const list = dummyPosts
-      .filter((p) => (board === 'notice' ? p.board === 'notice' : !p.pinned))
+      .filter((p) => (keyword ? true : board === 'notice' ? p.board === 'notice' : !p.pinned))
       .filter((p) => board === 'all' || p.board === board)
+      .filter((p) => !keyword || matchesDummy(p, keyword, field))
       .sort(byDesc(SORT_KEYS[sort]));
     return delay({ items: list.slice(from, to + 1), total: list.length });
   }
 
-  let q = supabase.from('posts').select(POST_FIELDS, { count: 'exact' });
+  // 작성자 검색은 작성자 프로필과 묶어서(inner join) 닉네임으로 거름
+  const fields =
+    keyword && field === 'author'
+      ? POST_FIELDS.replace('profiles!posts_author_id_fkey(', 'profiles!posts_author_id_fkey!inner(')
+      : POST_FIELDS;
+  let q = supabase.from('posts').select(fields, { count: 'exact' });
   if (board !== 'all') q = q.eq('board_slug', board);
-  if (board !== 'notice') q = q.eq('is_pinned', false);
+
+  if (keyword) {
+    const pattern = `%${likeEscape(keyword)}%`;
+    if (field === 'author') q = q.ilike('author.nickname', pattern);
+    else if (field === 'title') q = q.ilike('title', pattern);
+    else q = q.or(`title.ilike.${quoteFilter(pattern)},content.ilike.${quoteFilter(pattern)}`);
+  } else if (board !== 'notice') {
+    q = q.eq('is_pinned', false);
+  }
+
   q = q.order(SORT_COLUMNS[sort], { ascending: false }).order('id', { ascending: false }).range(from, to);
 
   const { data, error, count } = await q;
