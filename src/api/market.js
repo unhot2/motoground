@@ -21,7 +21,9 @@ const SELLER = 'seller:profiles!listings_seller_id_fkey(nickname, avatar_url)';
 // listing_images.path(저장소 안 경로) ↔ 공개 주소
 const marker = `/object/public/${BUCKET}/`;
 const toPath = (url) => (url.includes(marker) ? decodeURIComponent(url.split(marker)[1]) : url);
-const toUrl = (path) => supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+// 더미 매물처럼 사이트 안 정적 파일(/dummy/...)이나 외부 주소면 그대로 사용
+const toUrl = (path) =>
+  /^(https?:)?\//.test(path) ? path : supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 
 // DB 행 → 화면에서 쓰는 모양
 const toListing = (row) => ({
