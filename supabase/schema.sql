@@ -430,7 +430,8 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
   ('post-images',    'post-images',    true, 5242880, array['image/jpeg', 'image/png', 'image/webp', 'image/gif']),
   ('avatars',        'avatars',        true, 1048576, array['image/jpeg', 'image/png', 'image/webp']),
   ('garage-images',  'garage-images',  true, 5242880, array['image/jpeg', 'image/png', 'image/webp']),
-  ('place-images',   'place-images',   true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
+  ('place-images',   'place-images',   true, 5242880, array['image/jpeg', 'image/png', 'image/webp']),
+  ('goods-images',   'goods-images',   true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
 
 drop policy if exists "motoground_images_read"   on storage.objects;
@@ -439,23 +440,23 @@ drop policy if exists "motoground_images_update" on storage.objects;
 drop policy if exists "motoground_images_delete" on storage.objects;
 
 create policy "motoground_images_read" on storage.objects for select
-  using (bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images', 'place-images'));
+  using (bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images', 'place-images', 'goods-images'));
 
 create policy "motoground_images_insert" on storage.objects for insert to authenticated
   with check (
-    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images', 'place-images')
+    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images', 'place-images', 'goods-images')
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
 create policy "motoground_images_update" on storage.objects for update to authenticated
   using (
-    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images', 'place-images')
+    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images', 'place-images', 'goods-images')
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
 create policy "motoground_images_delete" on storage.objects for delete to authenticated
   using (
-    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images', 'place-images')
+    bucket_id in ('listing-images', 'post-images', 'avatars', 'garage-images', 'place-images', 'goods-images')
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
@@ -708,3 +709,145 @@ drop policy if exists "place_likes_delete" on public.place_likes;
 create policy "place_likes_read"   on public.place_likes for select to authenticated using (user_id = auth.uid());
 create policy "place_likes_insert" on public.place_likes for insert to authenticated with check (user_id = auth.uid());
 create policy "place_likes_delete" on public.place_likes for delete to authenticated using (user_id = auth.uid());
+
+
+-- =====================================================================
+-- 용품 거래 — 헬멧 · 자켓 · 보호장비 등 바이크 용품 중고/새상품 거래 (AC-19)
+-- 예전에 schema.sql 을 실행했어도 다시 Run 하면 이 부분과 사진 저장소만 추가됩니다
+-- =====================================================================
+create table if not exists public.goods (
+  id          bigint generated always as identity primary key,
+  seller_id   uuid references public.profiles (id) on delete cascade,
+  category    text check (category in ('helmet', 'jacket', 'glove', 'boots', 'protector', 'comm', 'mount', 'tool', 'parts', 'etc')),
+  title       text not null check (char_length(title) between 1 and 100),
+  brand       text,
+  size        text,                                     -- 사이즈 (예: L, 42, 원터치 등 자유 입력)
+  condition   text check (condition in ('new_sealed', 'new', 'used_high', 'used_mid', 'used_low')),
+  price       int  check (price >= 0),                  -- 원 단위
+  region      text,                                     -- 거래 지역 (예: 서울 강남구)
+  description text,
+  status      text not null default 'selling' check (status in ('selling', 'reserved', 'sold')),
+  view_count  int  not null default 0,
+  like_count  int  not null default 0,                  -- 찜 수, 트리거로 자동 계산
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+create index if not exists goods_status_created_idx on public.goods (status, created_at desc);
+create index if not exists goods_category_idx       on public.goods (category);
+create index if not exists goods_price_idx           on public.goods (price);
+create index if not exists goods_seller_idx          on public.goods (seller_id);
+
+-- 용품 사진 (goods-images 저장소의 파일 경로)
+create table if not exists public.goods_images (
+  id          bigint generated always as identity primary key,
+  goods_id    bigint not null references public.goods (id) on delete cascade,
+  path        text not null,                             -- 저장소 안 경로: {회원id}/{파일명}
+  sort_order  int  not null default 0,                   -- 0번이 대표 사진
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists goods_images_goods_idx on public.goods_images (goods_id, sort_order);
+
+-- 용품 연락처 (오픈채팅 링크·전화번호) — 로그인한 회원만 볼 수 있게 용품과 따로 저장
+create table if not exists public.goods_contacts (
+  goods_id bigint primary key references public.goods (id) on delete cascade,
+  contact  text not null check (char_length(contact) between 1 and 200)
+);
+
+-- 용품 찜
+create table if not exists public.goods_likes (
+  goods_id   bigint not null references public.goods (id) on delete cascade,
+  user_id    uuid not null references public.profiles (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (goods_id, user_id)
+);
+
+drop trigger if exists goods_touch on public.goods;
+create trigger goods_touch before update on public.goods
+  for each row execute function public.touch_updated_at();
+
+-- 용품 찜 수
+create or replace function public.sync_goods_like_count()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'INSERT' then
+    update goods set like_count = like_count + 1 where id = new.goods_id;
+  elsif tg_op = 'DELETE' then
+    update goods set like_count = greatest(like_count - 1, 0) where id = old.goods_id;
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists goods_likes_count on public.goods_likes;
+create trigger goods_likes_count after insert or delete on public.goods_likes
+  for each row execute function public.sync_goods_like_count();
+
+-- 일반 회원이 자기 용품을 수정할 때 조회수·찜수·판매자를 바꾸지 못하게 보호
+create or replace function public.protect_goods_counters()
+returns trigger language plpgsql as $$
+begin
+  if current_user in ('anon', 'authenticated') and not public.is_admin() then
+    new.view_count := old.view_count;
+    new.like_count := old.like_count;
+    new.seller_id  := old.seller_id;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists goods_protect on public.goods;
+create trigger goods_protect before update on public.goods
+  for each row execute function public.protect_goods_counters();
+
+-- 조회수 +1 (누구나 호출 가능, 이 함수로만 조회수 변경)
+drop function if exists public.increment_goods_view(uuid);
+create or replace function public.increment_goods_view(p_goods_id bigint)
+returns void language sql security definer set search_path = public as $$
+  update goods set view_count = view_count + 1 where id = p_goods_id;
+$$;
+
+grant execute on function public.increment_goods_view(bigint) to anon, authenticated;
+
+alter table public.goods          enable row level security;
+alter table public.goods_images   enable row level security;
+alter table public.goods_contacts enable row level security;
+alter table public.goods_likes    enable row level security;
+
+-- 용품
+drop policy if exists "goods_read"   on public.goods;
+drop policy if exists "goods_insert" on public.goods;
+drop policy if exists "goods_update" on public.goods;
+drop policy if exists "goods_delete" on public.goods;
+create policy "goods_read"   on public.goods for select using (true);
+create policy "goods_insert" on public.goods for insert to authenticated
+  with check (seller_id = auth.uid() and view_count = 0 and like_count = 0);
+create policy "goods_update" on public.goods for update to authenticated
+  using (seller_id = auth.uid() or public.is_admin());
+create policy "goods_delete" on public.goods for delete to authenticated
+  using (seller_id = auth.uid() or public.is_admin());
+
+-- 용품 사진 (자기 용품에만 추가/삭제)
+drop policy if exists "goods_images_read"  on public.goods_images;
+drop policy if exists "goods_images_write" on public.goods_images;
+create policy "goods_images_read"  on public.goods_images for select using (true);
+create policy "goods_images_write" on public.goods_images for all to authenticated
+  using      (exists (select 1 from public.goods g where g.id = goods_id and g.seller_id = auth.uid()))
+  with check (exists (select 1 from public.goods g where g.id = goods_id and g.seller_id = auth.uid()));
+
+-- 용품 찜 (본인 것만 보이게)
+drop policy if exists "goods_likes_read"   on public.goods_likes;
+drop policy if exists "goods_likes_insert" on public.goods_likes;
+drop policy if exists "goods_likes_delete" on public.goods_likes;
+create policy "goods_likes_read"   on public.goods_likes for select to authenticated using (user_id = auth.uid());
+create policy "goods_likes_insert" on public.goods_likes for insert to authenticated with check (user_id = auth.uid());
+create policy "goods_likes_delete" on public.goods_likes for delete to authenticated using (user_id = auth.uid());
+
+-- 용품 연락처 (읽기는 로그인 회원만, 쓰기는 자기 용품만) — listing_contacts 와 동일한 패턴
+drop policy if exists "goods_contacts_read"  on public.goods_contacts;
+drop policy if exists "goods_contacts_write" on public.goods_contacts;
+create policy "goods_contacts_read"  on public.goods_contacts for select to authenticated using (true);
+create policy "goods_contacts_write" on public.goods_contacts for all to authenticated
+  using      (exists (select 1 from public.goods g where g.id = goods_id and g.seller_id = auth.uid()))
+  with check (exists (select 1 from public.goods g where g.id = goods_id and g.seller_id = auth.uid()));

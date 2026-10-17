@@ -7,7 +7,7 @@ export const mainNav = [
   { label: '중고매물', to: '/market', match: '/market' },
   { label: '모델 탐색', to: '/explore', match: '/explore' },
   { label: '플레이스', to: '/place', match: '/place' },
-  { label: '용품', to: '/#services' },
+  { label: '용품', to: '/goods', match: '/goods' },
   { label: '내 차고', to: '/garage', match: '/garage' },
 ];
 
@@ -32,7 +32,7 @@ export const services = [
   { label: '인증중고', icon: 'shield', mobile: true },
   { label: '내차팔기', icon: 'tag', mobile: true, to: '/market/new' },
   { label: '최저가 보험', icon: 'umbrella', mobile: true },
-  { label: '용품', icon: 'helmet', mobile: true },
+  { label: '용품', icon: 'helmet', mobile: true, to: '/goods' },
   { label: '내 주변', icon: 'pin', to: '/place' },
   { label: '모델 탐색', icon: 'search', mobile: true, to: '/explore' },
   { label: '커뮤니티', icon: 'chat', to: '/community' },

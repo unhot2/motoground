@@ -24,6 +24,9 @@ import ListingFormPage from './pages/ListingFormPage.jsx';
 import PlacePage from './pages/PlacePage.jsx';
 import PlaceDetailPage from './pages/PlaceDetailPage.jsx';
 import PlaceFormPage from './pages/PlaceFormPage.jsx';
+import GoodsPage from './pages/GoodsPage.jsx';
+import GoodsDetailPage from './pages/GoodsDetailPage.jsx';
+import GoodsFormPage from './pages/GoodsFormPage.jsx';
 
 export default function App() {
   return (
@@ -38,6 +41,8 @@ export default function App() {
         <Route path="/market/:id" element={<ListingDetailPage />} />
         <Route path="/place" element={<PlacePage />} />
         <Route path="/place/:id" element={<PlaceDetailPage />} />
+        <Route path="/goods" element={<GoodsPage />} />
+        <Route path="/goods/:id" element={<GoodsDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -48,6 +53,8 @@ export default function App() {
           <Route path="/market/:id/edit" element={<ListingFormPage />} />
           <Route path="/place/new" element={<PlaceFormPage />} />
           <Route path="/place/:id/edit" element={<PlaceFormPage />} />
+          <Route path="/goods/new" element={<GoodsFormPage />} />
+          <Route path="/goods/:id/edit" element={<GoodsFormPage />} />
           <Route path="/garage" element={<GaragePage />} />
           <Route path="/garage/new" element={<BikeFormPage />} />
           <Route path="/garage/:id" element={<BikeDetailPage />} />

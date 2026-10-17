@@ -1,0 +1,54 @@
+/* =========================================
+   용품 (목록 / 상세 / 등록)
+   큰 틀은 market.css 의 market-page, listing-* 를 같이 씀
+   ========================================= */
+
+/* 목록 필터 — 상태·지역 2개만 써서 market-selects 보다 좁게 */
+.goods-selects {
+  grid-template-columns: repeat(2, minmax(0, 220px));
+}
+.market-filter__foot--end {
+  justify-content: flex-end;
+}
+
+/* 카드 하단 찜 수 */
+.listing-tag--likes {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 상세 요약 안 브랜드·사이즈·상태 */
+.goods-specs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 2px 0 0;
+}
+.goods-specs .listing-spec {
+  padding: 10px 12px;
+}
+.goods-specs dt {
+  font-size: 12px;
+}
+.goods-specs dd {
+  margin-top: 1px;
+  font-size: 14px;
+}
+
+/* 버튼 1개짜리 줄 (공유 버튼이 없어서) */
+.goods-actions__row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 1080px) {
+  .goods-selects {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .goods-specs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+}
